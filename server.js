@@ -11,7 +11,6 @@ import bcrypt from "bcrypt";
 
 // Initialize Express and PostgreSQL pool
 
-console.log(process.env.DB_PASSWORD);
 const app = express();
 const port = process.env.SERVER_PORT;
 
@@ -80,5 +79,3 @@ app.use("/patients", patientRoute);
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
 });
-
-
