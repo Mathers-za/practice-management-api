@@ -53,7 +53,7 @@ router.get("/all", async (req, res) => {
 
 router.get("/patient:id", async (req, res) => {
   try {
-    console.log(req.params.id + " " + req.user.id);
+    console.log(req.user);
 
     const result = await pool.query("select * from patients where id = $1", [
       req.params.id,
