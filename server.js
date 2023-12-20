@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import session from "express-session";
-import router from "./routes/users.js";
+import userRoute from "./routes/users.js";
+import patientRoute from "./routes/patients.js";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import pool from "./config/dbconfig.js";
@@ -73,8 +74,11 @@ passport.use(
 );
 
 // Routes
-app.use("/users", router);
+app.use("/users", userRoute);
+app.use("/patients", patientRoute);
 
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
 });
+
+
