@@ -57,7 +57,7 @@ router.get("/all", async (req, res) => {
 });
 
 router.get("/patient:id", async (req, res) => {
-  //find spescific patient based in id endpoint
+  //find spescific patient based in id endpoint // this route will mor ethane likley become redudant,thus rmeove if this occurs
   try {
     console.log(req.user);
 
@@ -80,7 +80,7 @@ router.get("/patient:id", async (req, res) => {
 
 router.put("/update:id", async (req, res) => {
   //update client endpoint
-  const { firstName, lastName, email, contactNumber } = req.body;
+  const { firstName, lastName, email, contactNumber } = req.body; //at some point you must replace this code with update route helper function
 
   try {
     const result = await pool.query(
