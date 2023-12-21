@@ -6,12 +6,12 @@ const router = express.Router();
 router.post("/create", async (req, res) => {
   //create client endpoint
 
-  const { fullname, contactnumber, email } = req.body;
+  const { first_name, last_name, contactnumber, email } = req.body;
 
   try {
     const data = await pool.query(
-      "INSERT INTO patients(fullname,email,contact_number,user_id) values($1,$2,$3,$4) returning * ",
-      [fullname, email, contactnumber, req.user.id]
+      "INSERT INTO patients(first_name,last_name,email,contact_number,user_id) values($1,$2,$3,$4,$5) returning * ",
+      [first_name, last_name, email, contactnumber, req.user.id]
     );
     res
       .status(201)
@@ -24,6 +24,7 @@ router.post("/create", async (req, res) => {
 
 router.delete("/delete:id", async (req, res) => {
   //delete cleint
+
   try {
     await pool.query("delete from patients where id = $1", [req.params.id]);
     res
@@ -36,9 +37,13 @@ router.delete("/delete:id", async (req, res) => {
 });
 
 router.get("/all", async (req, res) => {
+  //get all patients endpoint
   console.log(`the cookie is: ${req.user}`);
   try {
-    const result = await pool.query("select * from patients");
+    const result = await pool.query(
+      "select * from patients where user_id = $1",
+      [req.user.id]
+    );
     res.status(201).json({
       success: true,
       message: "successfuly read all patients",
@@ -52,12 +57,14 @@ router.get("/all", async (req, res) => {
 });
 
 router.get("/patient:id", async (req, res) => {
+  //find spescific patient based in id endpoint
   try {
     console.log(req.user);
 
-    const result = await pool.query("select * from patients where id = $1", [
-      req.params.id,
-    ]);
+    const result = await pool.query(
+      "select * from patients where id = $1 and user_id = $2",
+      [req.params.id, req.user.id]
+    );
     if (result.rows.length === 0) {
       res
         .status(404)
@@ -71,16 +78,16 @@ router.get("/patient:id", async (req, res) => {
   }
 });
 
-router.patch("/update:id", async (req, res) => {
-  const { fullname, email, contact_number } = req.body;
+router.put("/update:id", async (req, res) => {
+  //update client endpoint
+  const { firstName, lastName, email, contactNumber } = req.body;
 
   try {
     const result = await pool.query(
-      "update patients set fullname = $1, email = $2 , contact_number = $3 where id = $4 returning *  ",
-      [fullname, email, contact_number, req.params.id]
+      "update patients set first_name = $1, last_name = $2 , email= $3, contact_number = $4  where id = $5 returning *  ",
+      [firstName, lastName, email, contactNumber, req.params.id]
     );
-    console.log(result.rows.length);
-    console.log(req.params.id);
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -99,11 +106,5 @@ router.patch("/update:id", async (req, res) => {
     });
   }
 });
-
-//get all clients
-
-//get specific client
-
-//update client (partial updates using patch)
 
 export default router;
