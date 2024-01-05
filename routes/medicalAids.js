@@ -53,7 +53,7 @@ router.patch("/update/:id", async (req, res) => {
 
 router.get("/details/:id", async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+
   try {
     const result = await pool.query(
       "select * from medical_aid where patient_id = $1",

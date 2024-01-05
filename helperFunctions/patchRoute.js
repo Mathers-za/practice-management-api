@@ -4,7 +4,7 @@ async function updateRecords(req, res, tableName, idColumnName) {
   try {
     const updates = req.body;
 
-    const { id } = req.params;
+    const id = req.params.id;
 
     const updateColumns = Object.keys(updates);
 
@@ -37,7 +37,7 @@ async function updateRecords(req, res, tableName, idColumnName) {
     res.status(500).json({
       success: false,
       message: "failed to update records",
-      error: error,
+      error: error.message,
     });
   }
 }

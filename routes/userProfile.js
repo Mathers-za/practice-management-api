@@ -5,9 +5,9 @@ import updateRecords from "../helperFunctions/patchRoute.js";
 const router = express.Router();
 
 router.post("/createProfile", async (req, res) => {
-  const { firstName, lastName, contactNumber, email } = req.body;
+  const { firstName, lastName, contactNumber, email, regNum } = req.body;
   const query =
-    "INSERT INTO user_profile(first_name,last_name, profile_email,contact_num,user_id)VALUES($1,$2,$3,$4,$5) returning *";
+    "INSERT INTO user_profile(first_name,last_name, profile_email,contact_num,user_id,council_reg_num)VALUES($1,$2,$3,$4,$5,$6) returning *";
 
   try {
     const result = await pool.query(query, [
@@ -16,12 +16,13 @@ router.post("/createProfile", async (req, res) => {
       email,
       contactNumber,
       req.user.id,
+      regNum,
     ]);
-    console.log(result.rows[0]);
+
     res.status(201).json({
       success: true,
       message: "user profile successfully created",
-      data: result.rows,
+      data: result.rows[0],
     });
   } catch (error) {
     console.error(error);

@@ -8,7 +8,7 @@ router.get("/view", async (req, res) => {
   try {
     const results = await pool.query(
       `SELECT pd.id, pd.practice_name, pd.practice_num,pd.practice_address,pd.billing_address,
-                        pd.profile_id,pd.registration_num, up.user_id from practice_details AS pd 
+                        pd.profile_id,up.user_id from practice_details AS pd 
                         inner join user_profile AS up ON pd.profile_id = up.id 
                         WHERE up.user_id = $1 `,
       [req.user.id]
@@ -28,27 +28,14 @@ router.get("/view", async (req, res) => {
 });
 
 router.post("/createPractice:id", async (req, res) => {
-  const {
-    pracName,
-    pracNum,
-    pracAddress,
-    pracBillingAddress,
-    registrationNum,
-  } = req.body;
+  const { pracName, pracNum, pracAddress, pracBillingAddress } = req.body;
   const profile_id = req.params.id;
   console.log(pracName);
 
   try {
     const results = await pool.query(
-      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id,registration_num)values($1,$2,$3,$4,$5,$6)",
-      [
-        pracName,
-        pracNum,
-        pracAddress,
-        pracBillingAddress,
-        profile_id,
-        registrationNum,
-      ]
+      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5)",
+      [pracName, pracNum, pracAddress, pracBillingAddress, profile_id]
     );
 
     res.status(201).json({
@@ -60,7 +47,7 @@ router.post("/createPractice:id", async (req, res) => {
     console.error(error.message);
     res
       .status(500)
-      .json({ success: false, message: "failed to create practice detail." });
+      .json({ success: false, message: "failed to create practice." });
   }
 });
 

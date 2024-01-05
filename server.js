@@ -8,6 +8,7 @@ import passport from "./config/passportConfig.js";
 import medicalAidRoute from "./routes/medicalAids.js";
 import profileRoute from "./routes/userProfile.js";
 import practiceDetailsRoute from "./routes/practiceDetails.js";
+import appointmentTypesRoute from "./routes/appointmentType.js";
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -31,6 +32,7 @@ app.use("/patients", patientRoute);
 app.use("/medicalAid", medicalAidRoute);
 app.use("/profile", profileRoute);
 app.use("/practiceDetails", practiceDetailsRoute);
+app.use("/appointmentTypes", appointmentTypesRoute);
 
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
