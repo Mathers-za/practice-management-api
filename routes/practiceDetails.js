@@ -45,9 +45,11 @@ router.post("/createPractice:id", async (req, res) => {
     });
   } catch (error) {
     console.error(error.message);
-    res
-      .status(500)
-      .json({ success: false, message: "failed to create practice." });
+    res.status(500).json({
+      success: false,
+      message: "failed to create practice.",
+      error: error.message,
+    });
   }
 });
 

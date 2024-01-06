@@ -12,7 +12,6 @@ router.post("/create", async (req, res) => {
     medAidNum,
     mainMemName,
     mainMemSurname,
-
     mainMemGovId,
     patient_id,
   } = req.body;

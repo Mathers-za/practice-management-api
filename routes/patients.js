@@ -25,10 +25,8 @@ router.post("/create:id", async (req, res) => {
 });
 
 router.delete("/delete:id", async (req, res) => {
-  //delete cleint
-
   try {
-    await pool.query("delete from patients where id = $1", [req.params.id]);
+    await pool.query("delete from patients where id = $1", [req.params.id]); //will have to sort out delete cascades later on in db design
     res
       .status(201)
       .json({ success: true, message: "patient succesfully deleted" });
@@ -46,15 +44,25 @@ router.get("/all:id", async (req, res) => {
       "select * from patients where profile_id= $1",
       [profileId]
     );
-    res.status(201).json({
-      success: true,
-      message: "successfuly read all patients",
-      data: result.rows,
-      cookie: req.user.id,
-    });
+
+    if (result.rowCount === 0) {
+      res.status(200).json({
+        message: "No patients exist - create patients in order to display data",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "successfuly retrieved all patients",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error(error.message);
-    res.json({ success: false, message: error });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 });
 
@@ -65,16 +73,20 @@ router.get("/patient:id", async (req, res) => {
     const result = await pool.query("select * from patients where id = $1", [
       req.params.id,
     ]);
-    if (result.rows.length === 0) {
+    if (result.rows == 0) {
       res
-        .status(404)
-        .json({ success: false, message: "patient does not exist" });
+        .status(200)
+        .json({ message: "patient with specified id does not exist" });
     } else {
       res.status(201).json({ success: true, data: result.rows[0] });
     }
   } catch (error) {
     console.error(error.message);
-    res.json({ success: false, message: error });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 });
 

@@ -1,8 +1,8 @@
-import express, { json } from "express";
+import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
 
-const router = express.Router();
+const router = express.Router(); //no delete route- need to fighure out how to cascade delete while arching poetnetially important info
 
 router.post("/createProfile", async (req, res) => {
   const { firstName, lastName, contactNumber, email, regNum } = req.body;
