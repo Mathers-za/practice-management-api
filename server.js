@@ -12,6 +12,7 @@ import appointmentTypesRoute from "./routes/appointmentType.js";
 import appointmentsRoute from "./routes/appointments.js";
 import invoiceRoute from "./routes/invoices.js";
 import predefInedIcd10CodesRoute from "./routes/predefinedIcdCoding.js";
+import icd10CodeRoute from "./routes/icd10Codes.js";
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -39,6 +40,7 @@ app.use("/appointmentTypes", appointmentTypesRoute);
 app.use("/appointments", appointmentsRoute);
 app.use("/invoice", invoiceRoute);
 app.use("/predefinedIcd10", predefInedIcd10CodesRoute);
+app.use("/icd10Codes", icd10CodeRoute);
 
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
