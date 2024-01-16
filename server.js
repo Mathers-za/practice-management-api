@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
+import cors from "cors";
 import session from "express-session";
 import userRoute from "./routes/users.js";
 import patientRoute from "./routes/patients.js";
@@ -26,6 +27,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors());
 
 app.use(passport.initialize());
 app.use(passport.session());
