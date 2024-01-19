@@ -14,6 +14,7 @@ import appointmentsRoute from "./routes/appointments.js";
 import invoiceRoute from "./routes/invoices.js";
 import predefInedIcd10CodesRoute from "./routes/predefinedIcdCoding.js";
 import icd10CodeRoute from "./routes/icd10Codes.js";
+import sessionValidationRoute from "./routes/sessionValidation.js";
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -23,16 +24,29 @@ app.use(
     secret: process.env.SECRET_KEY, //middleware
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      domain: "localhost",
+    },
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin: "http://localhost:3000",
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Routes
+app.use("/session", sessionValidationRoute);
+//add req.isAthtcated middleware here to secure the follwoing routes:
 app.use("/users", userRoute);
 app.use("/patients", patientRoute);
 app.use("/medicalAid", medicalAidRoute);

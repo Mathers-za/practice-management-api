@@ -47,6 +47,8 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
   res.json({ message: "Login successful", user: req.user });
+  console.log("login succesfully");
+  console.log("user has a session: " + req.sessionID);
 });
 
 export default router;
