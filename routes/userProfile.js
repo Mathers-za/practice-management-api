@@ -45,11 +45,17 @@ router.get("/view", async (req, res) => {
       [req.user.id]
     );
 
-    res.status(201).json({
-      success: true,
-      message: "successfully retrieved user profile",
-      data: result.rows[0],
-    });
+    if (result.rowCount > 0) {
+      res.status(200).json({
+        success: true,
+        message: "successfully retrieved user profile",
+        data: result.rows[0],
+      });
+    } else {
+      res
+        .status(404)
+        .json({ message: "No Data entries exist for specifed user id" });
+    }
   } catch (error) {
     console.error(error.message);
     res.status(500).json({

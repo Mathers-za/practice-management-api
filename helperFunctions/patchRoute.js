@@ -31,7 +31,7 @@ async function updateRecords(req, res, tableName, idColumnName) {
         .json({ success: true, message: "successfully updated records" });
     } else {
       res
-        .status(200)
+        .status(404)
         .json({ success: false, message: "failed to find record" });
     }
   } catch (error) {

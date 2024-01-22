@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/view", async (req, res) => {
   try {
-    const result = await pool.query("SELECT email FROM users");
+    const result = await pool.query("SELECT * FROM users");
     if (result.rowCount > 0) {
       res.status(200).json({
         success: true,
@@ -32,23 +32,24 @@ router.post("/register", async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
-    await pool.query("insert into users(email,password)values($1,$2)", [
-      email,
-      hashedPassword,
-    ]);
-    res
-      .status(201)
-      .json({ success: true, message: "user successfully created" });
+    const result = await pool.query(
+      "insert into users(email,password)values($1,$2)",
+      [email, hashedPassword]
+    );
+
+    if (result.rowCount > 0) {
+      res
+        .status(201)
+        .json({ success: true, message: "user successfully created" });
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "internal server problem" });
+    res.status(500).json({ message: "internal server error" });
   }
 });
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
-  res.json({ message: "Login successful", user: req.user });
-  console.log("login succesfully");
-  console.log("user has a session: " + req.sessionID);
+  res.status(200).json({ message: "Login successful", data: req.user });
 });
 
 export default router;
