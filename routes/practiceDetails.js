@@ -4,45 +4,57 @@ import updateRecords from "../helperFunctions/patchRoute.js";
 
 const router = express.Router();
 
-router.get("/view", async (req, res) => {
+router.get("/view:id", async (req, res) => {
+  const profileId = req.params.id;
+
   try {
-    const results = await pool.query(
-      `SELECT pd.id, pd.practice_name, pd.practice_num,pd.practice_address,pd.billing_address,
-                        pd.profile_id,up.user_id from practice_details AS pd 
-                        inner join user_profile AS up ON pd.profile_id = up.id 
-                        WHERE up.user_id = $1 `,
-      [req.user.id]
+    const result = await pool.query(
+      "SELECT * FROM practice_details where profile_id = $1",
+      [profileId]
     );
 
-    res.status(201).json({
-      success: true,
-      message: "successfully retrieved practice details",
-      data: results.rows[0],
-    });
+    if (result.rowCount > 0) {
+      res
+        .status(200)
+        .json({ message: "successfully retrieved data", data: result.rows[0] });
+    } else {
+      res.status(404).json({ message: "Data does not exist" });
+    }
   } catch (error) {
     console.error(error.message);
     res
       .status(500)
-      .json({ success: false, message: "failed to retrieve practice details" });
+      .json({ message: "interal server error", error: error.message });
+    throw error;
   }
 });
 
-router.post("/createPractice:id", async (req, res) => {
-  const { pracName, pracNum, pracAddress, pracBillingAddress } = req.body;
+router.post("/create:id", async (req, res) => {
   const profile_id = req.params.id;
+  const { practice_name, practice_num, practice_address, billing_address } =
+    req.body;
+
   console.log(pracName);
 
   try {
-    const results = await pool.query(
+    const result = await pool.query(
       "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5)",
-      [pracName, pracNum, pracAddress, pracBillingAddress, profile_id]
+      [
+        practice_name,
+        practice_num,
+        practice_address,
+        billing_address,
+        profile_id,
+      ]
     );
 
-    res.status(201).json({
-      success: true,
-      message: "succeesfully created practice",
-      data: results.rows[0],
-    });
+    if (result.rowCount > 0) {
+      res.status(201).json({
+        success: true,
+        message: "successfully created resource",
+        data: result.rows[0],
+      });
+    }
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
@@ -50,7 +62,14 @@ router.post("/createPractice:id", async (req, res) => {
       message: "failed to create practice.",
       error: error.message,
     });
+
+    throw error;
   }
+});
+
+router.patch("/update:id", async (req, res) => {
+  await updateRecords(req, res, "practice_details", "id");
+  console.log("patch request was initiated");
 });
 
 export default router;

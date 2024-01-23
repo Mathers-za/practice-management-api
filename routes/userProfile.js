@@ -36,8 +36,7 @@ router.post("/createProfile", async (req, res) => {
 });
 
 router.patch("/update:id", async (req, res) => {
-  console.log(req.params.id);
-  const result = await updateRecords(req, res, "user_profile", "id");
+  await updateRecords(req, res, "user_profile", "id");
   console.log("patch request was initiated");
 });
 
