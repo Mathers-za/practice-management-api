@@ -1,5 +1,4 @@
 import pool from "../config/dbconfig.js";
-import router from "../routes/appointments.js";
 
 async function updateRecords(req, res, tableName, idColumnName) {
   try {

@@ -5,18 +5,19 @@ import updateRecords from "../helperFunctions/patchRoute.js";
 const router = express.Router(); //no delete route- need to fighure out how to cascade delete while arching poetnetially important info
 
 router.post("/createProfile", async (req, res) => {
-  const { firstName, lastName, contactNumber, email, regNum } = req.body;
+  const { first_name, last_name, profile_email, contact_num, council_reg_num } =
+    req.body;
   const query =
     "INSERT INTO user_profile(first_name,last_name, profile_email,contact_num,user_id,council_reg_num)VALUES($1,$2,$3,$4,$5,$6) returning *";
 
   try {
     const result = await pool.query(query, [
-      firstName,
-      lastName,
-      email,
-      contactNumber,
+      first_name,
+      last_name,
+      profile_email,
+      contact_num,
       req.user.id,
-      regNum,
+      council_reg_num,
     ]);
 
     res.status(201).json({
@@ -28,14 +29,16 @@ router.post("/createProfile", async (req, res) => {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: "internal server error",
+      message: "Internal server error",
       error: error.message,
     });
   }
 });
 
-router.patch("/updateProfile:id", async (req, res) => {
-  await updateRecords(req, res, "user_profile", "id");
+router.patch("/update:id", async (req, res) => {
+  console.log(req.params.id);
+  const result = await updateRecords(req, res, "user_profile", "id");
+  console.log("patch request was initiated");
 });
 
 router.get("/view", async (req, res) => {
