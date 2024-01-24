@@ -34,8 +34,6 @@ router.post("/create:id", async (req, res) => {
   const { practice_name, practice_num, practice_address, billing_address } =
     req.body;
 
-  console.log(pracName);
-
   try {
     const result = await pool.query(
       "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5)",
