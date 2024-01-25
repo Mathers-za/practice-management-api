@@ -11,49 +11,14 @@ router.post("/create:id", async (req, res) => {
   const profileId = req.params.id;
 
   try {
-    const data = await pool.query(
+    result = await pool.query(
       "INSERT INTO patients(first_name,last_name,email,contact_number,profile_id) values($1,$2,$3,$4,$5) returning * ",
       [firstName, lastName, email, contactNumber, profileId]
     );
-    res
-      .status(201)
-      .json({ success: true, message: "patient successfuly created" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ success: false, message: "failed to create user" });
-  }
-});
-
-router.delete("/delete:id", async (req, res) => {
-  try {
-    await pool.query("delete from patients where id = $1", [req.params.id]); //will have to sort out delete cascades later on in db design
-    res
-      .status(201)
-      .json({ success: true, message: "patient succesfully deleted" });
-  } catch (error) {
-    console.error(error.message);
-    res.json({ success: false, message: error });
-  }
-});
-
-router.get("/all:id", async (req, res) => {
-  //get all patients endpoint
-  const profileId = req.params.id;
-  try {
-    const result = await pool.query(
-      "select * from patients where profile_id= $1",
-      [profileId]
-    );
-
-    if (result.rowCount === 0) {
-      res.status(200).json({
-        message: "No patients exist - create patients in order to display data",
-      });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "successfuly retrieved all patients",
-        data: result.rows,
+    if (result.rowCount > 0) {
+      res.status(201).json({
+        message: "Patient successfully created",
+        data: result.rows[0],
       });
     }
   } catch (error) {
@@ -66,19 +31,60 @@ router.get("/all:id", async (req, res) => {
   }
 });
 
-router.get("/patient:id", async (req, res) => {
+router.delete("/delete:id", async (req, res) => {
+  try {
+    await pool.query("delete from patients where id = $1", [req.params.id]); //will have to sort out delete cascades later on in db design
+    res
+      .status(201)
+      .json({ success: true, message: "patient successfully deleted" });
+  } catch (error) {
+    console.error(error.message);
+    res.json({ success: false, message: error });
+  }
+});
+
+router.get("/viewAll:id", async (req, res) => {
+  //get all patients endpoint
+  const profileId = req.params.id;
+  try {
+    const result = await pool.query(
+      "select * from patients where profile_id= $1 ",
+      [profileId]
+    );
+
+    if (result.rowCount > 0) {
+      res.status(200).json({
+        message: "successfully retrieved all patients",
+        data: result.rows,
+      });
+    } else {
+      res.status(204);
+    }
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+});
+
+router.get("/viewPatient:id", async (req, res) => {
   try {
     console.log(req.user);
 
     const result = await pool.query("select * from patients where id = $1", [
       req.params.id,
     ]);
-    if (result.rows == 0) {
-      res
-        .status(200)
-        .json({ message: "patient with specified id does not exist" });
+
+    if (result.rowCount > 0) {
+      res.status(200).json({
+        message: "successfully retrieved the patients information",
+        data: result.rows[0],
+      });
     } else {
-      res.status(201).json({ success: true, data: result.rows[0] });
+      res.status(204);
     }
   } catch (error) {
     console.error(error.message);
