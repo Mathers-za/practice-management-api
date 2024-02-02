@@ -25,20 +25,12 @@ async function updateRecords(req, res, tableName, idColumnName) {
     const result = await pool.query(queryText, values);
 
     if (result.rowCount > 0) {
-      res
-        .status(201)
-        .json({ success: true, message: "successfully updated records" });
+      res.status(201).json(result.rows[0]);
     } else {
-      res
-        .status(404)
-        .json({ success: false, message: "failed to find record" });
+      res.status(204);
     }
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "failed to update records",
-      error: error.message,
-    });
+    res.status(500).json(error);
   }
 }
 

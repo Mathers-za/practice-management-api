@@ -7,19 +7,16 @@ const router = express.Router();
 router.post("/create:id", async (req, res) => {
   //create client endpoint
 
-  const { firstName, lastName, contactNumber, email } = req.body;
+  const { first_name, last_name, contact_number, email } = req.body;
   const profileId = req.params.id;
 
   try {
-    result = await pool.query(
+    const result = await pool.query(
       "INSERT INTO patients(first_name,last_name,email,contact_number,profile_id) values($1,$2,$3,$4,$5) returning * ",
-      [firstName, lastName, email, contactNumber, profileId]
+      [first_name, last_name, email, contact_number, profileId]
     );
     if (result.rowCount > 0) {
-      res.status(201).json({
-        message: "Patient successfully created",
-        data: result.rows[0],
-      });
+      res.status(201).json(result.rows[0]);
     }
   } catch (error) {
     console.error(error.message);
@@ -46,6 +43,7 @@ router.delete("/delete:id", async (req, res) => {
 router.get("/viewAll:id", async (req, res) => {
   //get all patients endpoint
   const profileId = req.params.id;
+  console.log(profileId);
   try {
     const result = await pool.query(
       "select * from patients where profile_id= $1 ",
@@ -53,12 +51,9 @@ router.get("/viewAll:id", async (req, res) => {
     );
 
     if (result.rowCount > 0) {
-      res.status(200).json({
-        message: "successfully retrieved all patients",
-        data: result.rows,
-      });
+      res.status(200).json(result.rows);
     } else {
-      res.status(204);
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error.message);
@@ -72,19 +67,16 @@ router.get("/viewAll:id", async (req, res) => {
 
 router.get("/viewPatient:id", async (req, res) => {
   try {
-    console.log(req.user);
+    console.log(req.params.id);
 
     const result = await pool.query("select * from patients where id = $1", [
       req.params.id,
     ]);
 
     if (result.rowCount > 0) {
-      res.status(200).json({
-        message: "successfully retrieved the patients information",
-        data: result.rows[0],
-      });
+      res.status(200).json(result.rows[0]);
     } else {
-      res.status(204);
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error.message);

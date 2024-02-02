@@ -14,11 +14,9 @@ router.get("/view:id", async (req, res) => {
     );
 
     if (result.rowCount > 0) {
-      res
-        .status(200)
-        .json({ message: "successfully retrieved data", data: result.rows[0] });
-    } else {
-      res.status(404).json({ message: "Data does not exist" });
+      res.status(200).json(result.rows[0]);
+    } else if (result.rowCount === 0) {
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error.message);
@@ -29,14 +27,18 @@ router.get("/view:id", async (req, res) => {
   }
 });
 
-router.post("/create:id", async (req, res) => {
-  const profile_id = req.params.id;
-  const { practice_name, practice_num, practice_address, billing_address } =
-    req.body;
+router.post("/create", async (req, res) => {
+  const {
+    practice_name,
+    practice_num,
+    practice_address,
+    billing_address,
+    profile_id,
+  } = req.body;
 
   try {
     const result = await pool.query(
-      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5)",
+      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5) returning *",
       [
         practice_name,
         practice_num,
@@ -47,11 +49,7 @@ router.post("/create:id", async (req, res) => {
     );
 
     if (result.rowCount > 0) {
-      res.status(201).json({
-        success: true,
-        message: "successfully created resource",
-        data: result.rows[0],
-      });
+      res.status(201).json(result.rows[0]);
     }
   } catch (error) {
     console.error(error.message);

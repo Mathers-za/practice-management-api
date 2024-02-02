@@ -20,11 +20,7 @@ router.post("/createProfile", async (req, res) => {
       council_reg_num,
     ]);
 
-    res.status(201).json({
-      success: true,
-      message: "user profile successfully created",
-      data: result.rows[0],
-    });
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -37,7 +33,6 @@ router.post("/createProfile", async (req, res) => {
 
 router.patch("/update:id", async (req, res) => {
   await updateRecords(req, res, "user_profile", "id");
-  console.log("patch request was initiated");
 });
 
 router.get("/view", async (req, res) => {
@@ -48,25 +43,13 @@ router.get("/view", async (req, res) => {
     );
 
     if (result.rowCount > 0) {
-      res.status(200).json({
-        success: true,
-        message: "successfully retrieved user profile",
-        data: result.rows[0],
-        exists: true,
-      });
+      res.status(200).json(result.rows[0]);
     } else {
-      res.status(200).json({
-        message: "No Data entries exist for specifed user id",
-        exists: false,
-      });
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "failed to retrieve user profile",
-      error: error.message,
-    });
+    res.status(500).json(error);
   }
 });
 

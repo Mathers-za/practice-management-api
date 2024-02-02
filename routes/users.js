@@ -8,6 +8,7 @@ const router = express.Router();
 router.get("/view", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM users");
+
     if (result.rowCount > 0) {
       res.status(200).json({
         success: true,
@@ -15,7 +16,7 @@ router.get("/view", async (req, res) => {
         data: result.rows,
       });
     } else {
-      res.status(204);
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error);
