@@ -115,4 +115,20 @@ router.get("/view:id", async (req, res) => {
   }
 });
 
+router.delete("/delete", async (req, res) => {
+  const preDfinedIcd10Id = req.body.id;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM predefined_icd10_codes WHERE id = $1`,
+      [preDfinedIcd10Id]
+    );
+    if (result.rowCount > 0) {
+      res.status(204).json();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 export default router;

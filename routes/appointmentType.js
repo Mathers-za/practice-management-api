@@ -20,23 +20,17 @@ router.post("/create:id", async (req, res) => {
   }
 });
 
-router.get("/view_all:id", async (req, res) => {
+router.get("/viewAll:id", async (req, res) => {
   const profile_id = req.params.id;
   try {
-    const { rows } = await pool.query(
+    const result = await pool.query(
       "SELECT * FROM appointment_type where profile_id = $1",
       [profile_id]
     );
-    if (rows.length > 0) {
-      res.status(201).json({
-        success: true,
-        message: "successfully retrieved appointment types",
-        data: rows,
-      });
+    if (result.rowCount > 0) {
+      res.status(201).json(result.rows);
     } else {
-      res
-        .status(404)
-        .json({ success: false, message: "appointment type does not exist" });
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error);
@@ -56,20 +50,14 @@ router.get("/view:id", async (req, res) => {
   const id = req.params.id;
 
   try {
-    const { rows } = await pool.query(
+    const result = await pool.query(
       "SELECT * FROM appointment_type WHERE id=$1",
       [id]
     );
-    if (rows.length > 0) {
-      res.status(200).json({
-        success: true,
-        message: "successfully retrieved appointment type data",
-        data: rows[0],
-      });
+    if (result.rowCount > 0) {
+      res.status(200).json(result.rows[0]);
     } else {
-      res
-        .status(200)
-        .json({ success: false, message: "no data found for specified id" });
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error.message);

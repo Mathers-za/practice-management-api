@@ -5,19 +5,21 @@ import updateRecords from "../helperFunctions/patchRoute.js";
 const router = express.Router();
 
 router.post("/createAppointment", async (req, res) => {
-  const { date, startTime, endTime, appTypeId, patientId } = req.body;
+  const {
+    appointment_date,
+    start_time,
+    end_time,
+    appointment_type_id,
+    patient_id,
+  } = req.body;
 
   try {
     const result = await pool.query(
-      "INSERT INTO appointments(appointment_date,start_time,end_time,appointment_type_id,patient_id)values($1,$2,$3,$4,$5)",
-      [date, startTime, endTime, appTypeId, patientId]
+      "INSERT INTO appointments(appointment_date,start_time,end_time,appointment_type_id,patient_id)values($1,$2,$3,$4,$5) returning *",
+      [appointment_date, start_time, end_time, appointment_type_id, patient_id]
     );
 
-    res.status(201).json({
-      success: true,
-      message: "appointment successfully created",
-      data: result.rows[0],
-    });
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
