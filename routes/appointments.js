@@ -162,4 +162,63 @@ router.delete("/deleteAppointment:id", async (req, res) => {
   }
 });
 
+router.get("/filter:id", async (req, res) => {
+  const data = req.query;
+  const profileId = req.params.id;
+  console.log(req.query);
+
+  try {
+    const dataArray = Object.keys(data);
+    console.log("the value of data array is" + dataArray);
+    let dynamicFilter = [];
+    const theValues = Object.values(data);
+    let placeHolderIndex = 1;
+
+    if (dataArray.includes("name")) {
+      dynamicFilter.push(
+        `(patients.first_name =$${placeHolderIndex} or patients.last_name = $${placeHolderIndex}) `
+      );
+      placeHolderIndex += 1;
+    }
+
+    if (dataArray.includes("start_date")) {
+      dynamicFilter.push(
+        `(appointment_date  >= $${placeHolderIndex} and appointment_date <= $${
+          placeHolderIndex + 1
+        }) `
+      );
+      placeHolderIndex += 2;
+    }
+    theValues.push(profileId);
+    dynamicFilter.push(`user_profile.id = $${placeHolderIndex}`);
+
+    dynamicFilter = dynamicFilter.join(" AND ");
+    console.log("the dynamic string is" + dynamicFilter);
+    console.log("the value sthat go with it are" + theValues);
+
+    const queryString = `SELECT APPOINTMENT_TYPE.PRICE,
+  PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+  PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+  APPOINTMENTS.END_TIME,
+  USER_PROFILE.FIRST_NAME AS PRACTITIONER_FIRST_NAME,
+  USER_PROFILE.LAST_NAME AS PRACTITIONER_LAST_NAME, 
+  PRACTICE_DETAILS.PRACTICE_ADDRESS,
+  APPOINTMENT_TYPE.APPOINTMENT_NAME,
+  APPOINTMENTS.APPOINTMENT_DATE,
+  APPOINTMENTS.START_TIME
+  FROM APPOINTMENTS
+  JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
+  JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
+  JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
+  JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.PROFILE_ID = USER_PROFILE.ID where ${dynamicFilter}`;
+
+    const result = await pool.query(queryString, theValues);
+    if (result.rowCount > 0) {
+      res.status(200).json(result.rows);
+    } else res.status(200).json([]);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
 export default router;
