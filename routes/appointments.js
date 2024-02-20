@@ -165,59 +165,55 @@ router.delete("/deleteAppointment:id", async (req, res) => {
 router.get("/filter:id", async (req, res) => {
   const data = req.query;
   const profileId = req.params.id;
-  console.log(req.query);
+  const properties = Object.keys(data);
+  const values = Object.values(data);
+  const dynamicFilter = [];
 
-  try {
-    const dataArray = Object.keys(data);
-    console.log("the value of data array is" + dataArray);
-    let dynamicFilter = [];
-    const theValues = Object.values(data);
-    let placeHolderIndex = 1;
-
-    if (dataArray.includes("name")) {
-      dynamicFilter.push(
-        `(patients.first_name =$${placeHolderIndex} or patients.last_name = $${placeHolderIndex}) `
-      );
-      placeHolderIndex += 1;
+  properties.forEach((property, index) => {
+    if (property === "start_date") {
+      dynamicFilter.push(`(appointment_date >= $${index + 1}`);
+    } else if (property === "end_date") {
+      dynamicFilter.push(`appointment_date <= $${index + 1})`);
+    } else {
+      dynamicFilter.push(`${property} = $${index + 1}`);
     }
+  });
 
-    if (dataArray.includes("start_date")) {
-      dynamicFilter.push(
-        `(appointment_date  >= $${placeHolderIndex} and appointment_date <= $${
-          placeHolderIndex + 1
-        }) `
-      );
-      placeHolderIndex += 2;
-    }
-    theValues.push(profileId);
-    dynamicFilter.push(`user_profile.id = $${placeHolderIndex}`);
+  dynamicFilter.push(`user_profile.id = $${dynamicFilter.length + 1}`);
+  values.push(profileId);
+  console.log("the query string " + dynamicFilter);
+  console.log("the values that go with the string " + values);
 
-    dynamicFilter = dynamicFilter.join(" AND ");
-    console.log("the dynamic string is" + dynamicFilter);
-    console.log("the value sthat go with it are" + theValues);
+  const joinedDynamicFilter = dynamicFilter.join(" AND ");
 
-    const queryString = `SELECT APPOINTMENT_TYPE.PRICE,
-  PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
-  PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
-  APPOINTMENTS.END_TIME,
-  USER_PROFILE.FIRST_NAME AS PRACTITIONER_FIRST_NAME,
-  USER_PROFILE.LAST_NAME AS PRACTITIONER_LAST_NAME, 
-  PRACTICE_DETAILS.PRACTICE_ADDRESS,
-  APPOINTMENT_TYPE.APPOINTMENT_NAME,
-  APPOINTMENTS.APPOINTMENT_DATE,
-  APPOINTMENTS.START_TIME
+  const queryString = `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+    PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+    APPOINTMENT_DATE,
+    USER_PROFILE.FIRST_NAME AS PRACTITIONER_FIRST_NAME,
+    USER_PROFILE.LAST_NAME AS PRACTITIONER_LAST_NAME,
+    START_TIME,
+    END_TIME,
+    PRACTICE_NAME,
+    PRACTICE_ADDRESS,
+    APPOINTMENT_NAME, 
+    APPOINTMENT_TYPE.price as apptype_price
   FROM APPOINTMENTS
+  JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
   JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
   JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
-  JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
-  JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.PROFILE_ID = USER_PROFILE.ID where ${dynamicFilter}`;
+  JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID 
+  WHERE ${joinedDynamicFilter}`;
 
-    const result = await pool.query(queryString, theValues);
+  try {
+    const result = await pool.query(queryString, values);
     if (result.rowCount > 0) {
       res.status(200).json(result.rows);
-    } else res.status(200).json([]);
+    } else {
+      res.status(200).json([]);
+    }
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
+    res.status(500).json(error.message);
   }
 });
 

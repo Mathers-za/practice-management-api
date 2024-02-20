@@ -149,4 +149,29 @@ router.delete("/deleteInvoice:id", async (req, res) => {
   }
 });
 
+router.get("/invoiceSetup:id", async (req, res) => {
+  const appointmentId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `select * from appointments
+  JOIN appointment_type ON appointment_type.id = appointments.appointment_type_id
+  JOIN patients ON patients.id = appointments.patient_id
+  JOIN user_profile ON user_profile.id = patients.profile_id
+  JOIN practice_details ON practice_details.profile_id = user_profile.id 
+  where appointments.id = $1`,
+      [appointmentId]
+    );
+
+    if (result.rowCount > 0) {
+      res.status(200).json(result.rows[0]);
+    } else {
+      res.status(404).json();
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error.message);
+  }
+});
+
 export default router;
