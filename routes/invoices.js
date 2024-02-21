@@ -11,13 +11,13 @@ router.post("/create", async (req, res) => {
   console.log(invoiceNumber);
 
   const {
-    amountDue,
-    amountPaid,
-    invoiceTotal,
-    paymentMethod,
-    paymentStatus,
-    invoiceNotes,
-    date,
+    amount_due,
+    amount_paid,
+    invoice_total,
+    payment_method,
+    payment_status,
+    notes,
+    invoice_date,
 
     appointmentId,
     icdCodesId,
@@ -29,36 +29,24 @@ router.post("/create", async (req, res) => {
         amount_paid,payment_method,notes,icd10_codes_id,appointment_id,payment_status)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
       [
         invoiceNumber,
-        date,
-        invoiceTotal,
-        amountDue,
-        amountPaid,
-        paymentMethod,
-        invoiceNotes,
+        invoice_date,
+        invoice_total,
+        amount_due,
+        amount_paid,
+        payment_method,
+        notes,
         icdCodesId,
         appointmentId,
-        paymentStatus,
+        payment_status,
       ]
     );
 
     if (result.rowCount > 0) {
-      res.status(201).json({
-        success: true,
-        message: "Successfully created invoice",
-        data: result.rows[0],
-      });
-    } else {
-      res
-        .status(400)
-        .json({ success: false, message: "Failed to create invoice" });
+      res.status(201).json(result.rows[0]);
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
+    res.status(500).json(error.message);
   }
 });
 
@@ -131,13 +119,7 @@ router.delete("/deleteInvoice:id", async (req, res) => {
   try {
     const result = await pool.query("DELETE FROM INVOICES WHERE id = $1", [id]);
     if (result.rowCount > 0) {
-      res
-        .status(200)
-        .json({ success: true, message: "successfully deleted invoice" });
-    } else {
-      res
-        .status(404)
-        .json({ success: false, message: "failed to delete record." });
+      res.status(204).json();
     }
   } catch (error) {
     console.error(error);
