@@ -30,7 +30,8 @@ async function updateRecords(req, res, tableName, idColumnName) {
       res.status(204);
     }
   } catch (error) {
-    res.status(500).json(error);
+    console.error(error);
+    res.status(500).json(error.message);
   }
 }
 

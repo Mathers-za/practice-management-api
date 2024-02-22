@@ -123,11 +123,7 @@ router.delete("/deleteInvoice:id", async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
+    res.status(500).json(error.message);
   }
 });
 
@@ -156,4 +152,9 @@ router.get("/invoiceSetup:id", async (req, res) => {
   }
 });
 
+
+
+
 export default router;
+
+

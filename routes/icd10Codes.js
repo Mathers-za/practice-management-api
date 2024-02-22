@@ -34,7 +34,7 @@ router.get(`/view:id`, async (req, res) => {
     );
 
     if (result.rowCount > 0) {
-      res.send(200).json(result.rows);
+      res.status(200).json(result.rows);
     } else {
       res.status(204).json();
     } //status sent back if resource not found ie (no codes for appointment exist yet)
