@@ -16,6 +16,8 @@ import predefInedIcd10CodesRoute from "./routes/predefinedIcdCoding.js";
 import icd10CodeRoute from "./routes/icd10Codes.js";
 import sessionValidationRoute from "./routes/sessionValidation.js";
 import treatmentNotesRoute from "./routes/treatmentNotes.js";
+import paymentRoute from "./routes/payments.js";
+import financialsRoute from "./routes/financials.js";
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -59,6 +61,8 @@ app.use("/invoice", invoiceRoute);
 app.use("/predefinedIcd10", predefInedIcd10CodesRoute);
 app.use("/icd10Codes", icd10CodeRoute);
 app.use("/treatmentNotes", treatmentNotesRoute);
+app.use("/financials", financialsRoute);
+app.use("/payments", paymentRoute);
 
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
