@@ -34,17 +34,19 @@ router.post("/create", async (req, res) => {
     practice_address,
     billing_address,
     profile_id,
+    bank_details,
   } = req.body;
 
   try {
     const result = await pool.query(
-      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5) returning *",
+      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5,$6) returning *",
       [
         practice_name,
         practice_num,
         practice_address,
         billing_address,
         profile_id,
+        bank_details,
       ]
     );
 
@@ -65,7 +67,6 @@ router.post("/create", async (req, res) => {
 
 router.patch("/update:id", async (req, res) => {
   await updateRecords(req, res, "practice_details", "id");
-  console.log("patch request was initiated");
 });
 
 export default router;
