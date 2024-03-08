@@ -57,7 +57,7 @@ app.use("/profile", profileRoute);
 app.use("/practiceDetails", practiceDetailsRoute);
 app.use("/appointmentTypes", appointmentTypesRoute);
 app.use("/appointments", appointmentsRoute);
-app.use("/invoice", invoiceRoute);
+app.use("/invoices", invoiceRoute);
 app.use("/predefinedIcd10", predefInedIcd10CodesRoute);
 app.use("/icd10Codes", icd10CodeRoute);
 app.use("/treatmentNotes", treatmentNotesRoute);

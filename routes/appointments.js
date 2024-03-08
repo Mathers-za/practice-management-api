@@ -198,6 +198,7 @@ router.get("/filter:id", async (req, res) => {
   APPOINTMENT_NAME, 
   APPOINTMENT_TYPE.price as apptype_price,
   APPOINTMENT_TYPE.ID AS apptype_id,
+  USER_PROFILE.ID as profile_id,
 APPOINTMENTS.ID AS appointment_id,
 PATIENTS.ID AS patient_id
 FROM APPOINTMENTS
