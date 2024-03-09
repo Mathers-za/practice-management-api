@@ -98,4 +98,30 @@ router.get("/invoiceSetup:id", async (req, res) => {
   }
 });
 
+router.get(`/batchview`, async (req, res) => {
+  const arrayOfAppointmenIds = req.query.appIds;
+  const objectResponse = {};
+  if (!arrayOfAppointmenIds) {
+    return;
+  }
+
+  for (const appId of arrayOfAppointmenIds) {
+    try {
+      const result = await pool.query(
+        `SELECT * FROM invoices where appointment_id = $1`,
+        [appId]
+      );
+      if (result.rowCount > 0) {
+        objectResponse[appId] = result.rows[0];
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
+      return;
+    }
+  }
+
+  res.status(200).json(objectResponse);
+});
+
 export default router;
