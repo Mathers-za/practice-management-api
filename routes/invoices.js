@@ -124,4 +124,52 @@ router.get(`/batchview`, async (req, res) => {
   res.status(200).json(objectResponse);
 });
 
+router.get(`/filteredView`, async (req, res) => {
+  const queryParams = req.query;
+  console.log(`the qyery params in endpoint ` + queryParams);
+  const paramKeys = Object.keys(queryParams);
+  const values = Object.values(queryParams);
+  const conditions = [];
+  paramKeys.forEach((key, index) => {
+    if (key === "invoice_start_date") {
+      conditions.push(`${key} >= $${index + 1}`);
+    } else if (key === "invoice_end_date") {
+      conditions.push(`${key} <= $${index + 1}`);
+    } else {
+      conditions.push(`${key} = $${index + 1}`);
+    }
+  });
+
+  try {
+    const result = await pool.query(
+      `SELECT INVOICE_NUMBER,
+    INVOICE_START_DATE,
+    INVOICE_END_DATE,
+    INVOICES.ID AS INVOICE_ID,
+    INVOICE_TITLE,
+    INVOICE_STATUS,
+    TOTAL_AMOUNT,
+    AMOUNT_DUE,
+    AMOUNT_PAID
+  FROM INVOICES
+  JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
+  JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+  JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID where ${conditions.join(
+    " AND "
+  )}`,
+      [...values]
+    );
+    console.log(`the result in endpoint ` + result);
+
+    if (result.rowCount > 0) {
+      res.status(200).json(result.rows);
+    } else {
+      res.status(204).json();
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error.message);
+  }
+});
+
 export default router;
