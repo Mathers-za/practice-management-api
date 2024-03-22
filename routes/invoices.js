@@ -1,7 +1,13 @@
 import express from "express";
+import { fileURLToPath } from "url";
 import pool from "../config/dbconfig.js";
 import { v4 as uuidv4 } from "uuid";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import puppeteer from "puppeteer";
+import { dirname, join } from "path";
+
+import createHtmlContentForConversion from "../helperFunctions/pdfConversion.js";
+import GenerateInvoiceStatment from "../helperFunctions/pdfConversion.js";
 
 const router = express.Router();
 
@@ -150,7 +156,13 @@ router.get(`/filteredView`, async (req, res) => {
     INVOICE_STATUS,
     TOTAL_AMOUNT,
     AMOUNT_DUE,
-    AMOUNT_PAID
+    AMOUNT_PAID,
+    APPOINTMENT_TYPE_ID,
+    APPOINTMENTS.ID AS APPOINTMENT_ID,
+    PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+    PATIENTS.LAST_NAME AS PATIENT_LAST_NAME
+    
+
   FROM INVOICES
   JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
   JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
@@ -164,8 +176,25 @@ router.get(`/filteredView`, async (req, res) => {
     if (result.rowCount > 0) {
       res.status(200).json(result.rows);
     } else {
-      res.status(204).json();
+      res.status(200).json([]);
     }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error.message);
+  }
+});
+
+router.post(`/pdfInvoiceCreate`, async (req, res) => {
+  const { patient_id, appointment_id, profile_id, invoice_id } = req.body;
+
+  try {
+    const result = await GenerateInvoiceStatment(
+      invoice_id,
+      profile_id,
+      appointment_id,
+      patient_id
+    );
+    res.send(result);
   } catch (error) {
     console.error(error);
     res.status(500).json(error.message);
