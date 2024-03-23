@@ -1,13 +1,15 @@
 import express from "express";
-import { fileURLToPath } from "url";
+
 import pool from "../config/dbconfig.js";
 import { v4 as uuidv4 } from "uuid";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import puppeteer from "puppeteer";
-import { dirname, join } from "path";
 
-import createHtmlContentForConversion from "../helperFunctions/pdfConversion.js";
-import GenerateInvoiceStatment from "../helperFunctions/pdfConversion.js";
+import { resolve } from "path";
+import {
+  compileHtmlContent,
+  extractDataFromDB,
+  convertToPdfAndStore,
+} from "../helperFunctions/pdfConversion.js";
 
 const router = express.Router();
 
@@ -188,13 +190,21 @@ router.post(`/pdfInvoiceCreate`, async (req, res) => {
   const { patient_id, appointment_id, profile_id, invoice_id } = req.body;
 
   try {
-    const result = await GenerateInvoiceStatment(
+    const data = await extractDataFromDB(
       invoice_id,
       profile_id,
       appointment_id,
       patient_id
     );
-    res.send(result);
+    const absolutePathToHtmlTemplate = resolve(
+      "./templates/invoiceStatement.hbs"
+    );
+    const htmlContent = await compileHtmlContent(
+      absolutePathToHtmlTemplate,
+      data
+    );
+    const uuidOfPdf = await convertToPdfAndStore(htmlContent);
+    res.send(uuidOfPdf);
   } catch (error) {
     console.error(error);
     res.status(500).json(error.message);

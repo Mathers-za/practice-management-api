@@ -1,0 +1,174 @@
+` <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document</title>
+      
+  <link rel="stylesheet" href="../public/invoiceStatement.css"> 
+  </head>
+  <body>
+  
+      <h1 class="header">Invoice Statment</h1>
+      <div class="container">
+          <div class="top">
+            <div class="top-left">
+                {{#with generalData}}
+              <p>{{defaultValue practice_name "" }}</p>
+              <p>Practice number: {{defaultValue practice_num  ""}}</p>
+              <p> Billing Address: {{ defaultValue billing_address  ""}}</p>
+              <div class="paidFigure">
+                <p> Amount due</p>
+                <p> {{ defaultValue amount_due  ""}}</p>
+                <p  id = "status"></p>
+              </div>
+            </div>
+            <div class="top-right">
+              <div class="invNumber">Inv number: {{
+                defaultValue  invoice_number  ""
+              }}</div>
+              <div class="dates">
+                <p> Date: "yyyy MM dd"</p>
+                <p>Due Date: {{ defaultValue invoice_end_date  ""}}</p> 
+              </div>
+              <div class="bill-to">
+               
+                <p>bill to :</p>
+                <p> {{ defaultValue patient_first_name  ""}} {{ defaultValue 
+    patient_last_name  ""
+  }}</p>
+                <p>email: {{ defaultValue patient_email  ""}}</p>
+                <p> contact: {{ defaultValue patient_contact_number  ""}}</p>
+              </div>
+              {{/with}}
+              <div class="medicalAid-details">
+                <p>Medical Aid</p>
+                 {{#if medicalAidData}}
+                 
+                <p> {{defaultValue medicalAidData.medaid_name  ""}} - {{
+    medicalAidData?.medaid_scheme  ""}}
+  </p>
+                <p> Membership #: {{defaultValue medicalAidData.medaid_number  ""}}</p>
+                <p> Patient: {{generalData?.patient_first_name  ""}} {{defaultValue 
+    generalData.patient_last_name  ""}}
+  </p>
+                <p>ID: {{defaultValue medicalAidData.gov_id  ""}}</p>
+                {{#if medicalAidData.mainmem_name  }}
+                <p>Patient is a dependant</p>
+                <p>{{ defaultValue medicalAidData.mainmem_name ""}}</p>
+                <p>{{defaultValue  medicalAidData.mainmem_surname  ""}}</p>
+                <p>{{defaultValue  medicalAidData.mainmem_gov_id  ""}}</p>
+                {{else}}
+                <p>Patient is the main member</p>
+                {{/if}}
+                
+               {{else}}
+               <p>No Medical Aid Data to show</p>
+               {{/if}} 
+
+
+                
+              </div>
+            </div>
+          </div>
+          <div  class="table">
+           <div>
+              <p ></p>
+              {{#with generalData}}
+              <p>{{defaultValue  patient_first_name  ""}} {{defaultValue  
+    patient_last_name ""
+  }}. <span id= tableHeaderTime></span>  </p>
+              <p>Treated by: {{defaultValue  user_first_name  ""}} {{ defaultValue
+    user_last_name  ""
+  }} ({{defaultValue  council_reg_num  ""}}) at {{defaultValue
+    practice_address  ""
+  }}</p>
+  {{/with}}
+           </div>
+           <table >
+           <thead>
+            {{#if icd10Data}} 
+            <tr>
+                <th>Patient Name</th>
+                <th>ICD10-Code</th>
+                <th>Procedural Code</th>
+                <th>Price</th>
+            </tr>
+
+            {{else}}
+            <tr>
+                <th>
+                    Patient Name
+                </th>
+                <th>
+                    Date
+                </th>
+                <th>Price</th>
+            </tr>
+            {{/if}}
+           </thead>
+           <tbody>
+
+            {{#if icd10Data}}
+            
+            {{#each icd10Data}}
+
+            <tr>
+                <td>{{ defaultValue  ../generalData.patient_first_name  ""}} {{ defaultValue  ../generalData.patient_first_name ""}}</td>
+                <td>{{ defaultValue  icd_10_code  ""}}</td>
+                <td>{{  defaultValue procedural_codes  ""}}</td>
+                <td>{{ defaultValue  price  ""}}</td>
+            </tr>
+            {{/each}}
+
+            {{else}}
+            
+            <tr>
+                <td>{{defaultValue  generalData.patient_first_name  ""}} {{defaultValue  generalData.patient_first_name  ""}}</td>
+                <td>The date</td>
+                <td>{{defaultValue  generalData.total_amount  ""}}</td>
+            </tr>
+
+            {{/if}}
+            
+         </tbody>
+          </table>
+          {{#with generalData}}
+            <div class="subTotal" >Sub-total: R{{ defaultValue 
+              total_amount  ""
+            }}</div>
+          </div>
+  
+  <div  class="bottom" >
+          <div class="bankingDetails">
+              <p>Banking Details</p>
+              <p>{{defaultValue  bank_details  ""}}</p>
+          </div>
+    
+          <div class="pricing">
+              
+              <p class="amount">Totals</p> 
+              <div class="amount">
+              <p class="amount">Invoice Total: R{{ defaultValue 
+                total_amount  ""
+              }} </p>  
+          </div>
+          <div class="amount">
+              <p class="amount">Amount paid: R{{ defaultValue 
+                amount_paid  ""
+              }}  </p>
+          </div>
+          <div class="amount"> 
+              <p class="amount" >Amount due: R{{ defaultValue 
+                amount_due  ""
+              }} 	 </p> 
+              </div>
+              {{/with}}
+          </div>
+      </div>
+          
+        </div>
+
+        
+  </body>
+  </html>;

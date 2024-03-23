@@ -1,55 +1,62 @@
 import pool from "../config/dbconfig.js";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import handlebars from "handlebars";
+import { readFileSync } from "fs";
 
 import { v4 as uuidv4 } from "uuid";
 import puppeteer from "puppeteer";
-import { json } from "express";
 
-async function convertToPdfAndStore(htmlContent) {
-  const uniquePdfId = uuidv4().slice(0, 5);
+async function compileHtmlContent(templatePath, data) {
+  // compiles passed data and html template and retruns html content //pass in absolute path to file you want to read
+  try {
+    const source = readFileSync(templatePath, "utf-8");
+    const template = handlebars.compile(source);
+    handlebars.registerHelper("defaultValue", (value, defaultValue) => {
+      return value ? value : defaultValue;
+    });
+    const html = template(data);
 
-  const currentModuleDirectory = dirname(fileURLToPath(import.meta.url));
-
-  const pdfStorePath = join(currentModuleDirectory, "../pdfStatmentStore");
-
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.setContent(htmlContent);
-
-  const pdfPath = join(pdfStorePath, `${uniquePdfId}-statment.pdf`);
-
-  await page.pdf({
-    format: "A4",
-    printBackground: true,
-    path: pdfPath,
-  });
-
-  await browser.close();
-  return uniquePdfId;
+    return html;
+  } catch (error) {
+    console.error("Error compiling the html document,");
+    throw error;
+  }
 }
 
-async function GenerateInvoiceStatment(
-  invoice_id,
-  profile_id,
-  appointnment_id,
-  patient_id
-) {
-  const { generalData, icdBillingData, medicalAidData } =
-    await extractDataFromDB(
-      invoice_id,
-      profile_id,
-      appointnment_id,
-      patient_id
-    );
-
-  const htmlContent = generateHtmlTemplate(
-    generalData,
-    icdBillingData,
-    medicalAidData
+async function convertToPdfAndStore(htmlContent) {
+  // converts html content to pdf and stores it in file system
+  const uniquePdfId = uuidv4().slice(0, 5);
+  const currentDirectory = dirname(fileURLToPath(import.meta.url));
+  console.log(currentDirectory);
+  const pathOfPdfFolder = join(currentDirectory, "../pdfStatmentsStore");
+  console.log(pathOfPdfFolder);
+  const pdfFilePath = join(
+    pathOfPdfFolder,
+    `${uniquePdfId}-invoiceStatment.pdf`
   );
-  const uuid = await convertToPdfAndStore(htmlContent);
-  return uuid;
+
+  console.log("PDF path " + pdfFilePath);
+
+  try {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(htmlContent);
+
+    await page.pdf({
+      printBackground: true,
+      format: "A4",
+      path: pdfFilePath,
+    });
+
+    await browser.close();
+  } catch (error) {
+    console.error(error);
+
+    throw error;
+  }
+
+  return uniquePdfId;
 }
 
 async function extractDataFromDB(
@@ -116,7 +123,7 @@ WHERE USER_PROFILE.ID = $1
 
     return {
       generalData: generalDataResult?.rows[0],
-      icdBillingData: icdBillingDataResult?.rows,
+      icd10Data: icdBillingDataResult?.rows,
       medicalAidData: medicalAidDataResult.rows[0],
     };
   } catch (error) {
@@ -125,290 +132,4 @@ WHERE USER_PROFILE.ID = $1
   }
 }
 
-function generateHtmlTemplate(generalData, icd10Data, medicalAidData) {
-  const htmlContent = ` <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Document</title>
-      
-  
-      <style>
-        body {
-    box-sizing: border-box;
-    margin: 0;
-    font-size: 0.9rem;
-  }
-  
-  body * {
-    box-sizing: border-box;
-  }
-  
-  .container {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 10px 15px;
-  }
-  
-  .container p {
-    margin: 0;
-  }
-  
-  .top {
-    display: flex;
-    min-width: 100%;
-    min-height: 40vh;
-    
-  }
-  
-  .top-right {
-    min-width: 50%;
-    
-    padding: 2px 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: space-around;
-    flex-grow: 1;
-  }
-  
-  .top-left {
-    min-width: 30%;
-   
-    padding: 10px 10px;
-  }
-  
-  .table {
-    min-width: 100%;
-    min-height: 20vh;
-   
-  }
-  
-  .pricing {
-    height: 20vh;
-    
-   
-    align-self: end;
-    
-  }
-  
-  .bankingDetails {
-    min-width: 50%;
-  
-  
-    min-height: 20vh;
-    align-self: start;
-  }
-  
-  .paidFigure {
-    border: 1px solid black;
-    min-height: 18vh;
-    display: flex;
-    flex-direction: column;
-    margin-top: 20px;
-  
-    align-items: center;
-  }
-  
-  .paidFigure p:nth-child(3) {
-    margin-top: auto;
-    min-height: 2rem;
-    background-color: blueviolet;
-    min-width: 100%;
-    text-align: center;
-    line-height: 2rem;
-  }
-  
-  .invNumber {
-    height: fit-content;
-    padding: 5px 5px;
-    background-color: green;
-  }
-  
-  table,
-  th, tr,
-  td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    height: 2rem;
-  }
-  
-  
-  
-  
-  table {
-    min-width: 100%;
-  } 
-  
-  td {
-      text-align: center;
-  }
-  
-  
-  .subTotal{
-      text-align:start;
-      
-      border-bottom: 1px solid black;
-      width: 17%;
-      
-      
-      
-  }
-  
-  .table {
-      padding: 10px 10px;
-      display:flex;
-      flex-direction: column;
-      gap: 10px;
-      border-top: 1px solid black;
-      border-bottom: 1px solid black;
-      
-  
-  }
-  
-  .table div:nth-child(2){
-      align-self: flex-end;
-  
-      
-      
-  }
-  
-  .amount {
-      display: flex;
-      gap: 20px;
-  
-  }
-  
-  .bottom {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 10px;
-  
-  }
-  
-  .container .bottom {
-      align-self: center;
-  }
-  
-  .header{
-      text-align: center;
-      margin-bottom: 2px;
-  }
-  
-  
-      </style>
-  </head>
-  <body>
-  
-      <h1 class="header">Invoice Statment</h1>
-      <div class="container">
-          <div class="top">
-            <div class="top-left">
-              <p>${generalData?.practice_name || ""}</p>
-              <p>Practice number: ${generalData?.practice_num || ""}</p>
-              <p> Billing Address: ${generalData?.billing_address || ""}</p>
-              <div class="paidFigure">
-                <p> Amount due</p>
-                <p> ${generalData?.amount_due || ""}</p>
-                <p  id = "status"></p>
-              </div>
-            </div>
-            <div class="top-right">
-              <div class="invNumber">Inv number: ${
-                generalData?.invoice_number || ""
-              }</div>
-              <div class="dates">
-                <p> Date: "yyyy MM dd"</p>
-                <p>Due Date: ${generalData?.invoice_end_date || ""}</p>
-              </div>
-              <div class="bill-to">
-               
-                <p>bill to :</p>
-                <p> ${generalData?.patient_first_name || ""} ${
-    generalData?.patient_last_name || ""
-  }</p>
-                <p>email: ${generalData?.patient_email || ""}</p>
-                <p> contact: ${generalData?.patient_contact_number || ""}</p>
-              </div>
-              <div class="medicalAid-details">
-                <p>Medical Aid</p>
-                <p> ${medicalAidData?.medaid_name || ""} - ${
-    medicalAidData?.medaid_scheme || ""
-  }</p>
-                <p> Membership #: ${medicalAidData?.medaid_number || ""}</p>
-                <p> Patient: ${generalData?.patient_first_name || ""} ${
-    generalData?.patient_last_name || ""
-  }</p>
-                <p>ID: ${medicalAidData?.gov_id || ""}</p>
-                <p id="mainMem"></p>
-              <p  id="mainmem_name_surname" ></p>
-              <p  id="mainmem_govId" ></p>
-                
-              </div>
-            </div>
-          </div>
-          <div  class="table">
-           <div>
-              <p ></p>
-              <p>${generalData?.patient_first_name || ""} ${
-    generalData?.patient_last_name || ""
-  }. <span id= tableHeaderTime></span>  </p>
-              <p>Treated by: ${generalData?.user_first_name || ""} ${
-    generalData?.user_last_name || ""
-  } (${generalData?.council_reg_num || ""}) at ${
-    generalData?.practice_address || ""
-  }</p>
-           </div>
-           <table id="table">
-           <thead>
-             
-           </thead>
-           <tbody>
-            
-         </tbody>
-          </table>
-            <div class="subTotal" >Sub-total: R${
-              generalData?.total_amount || ""
-            }</div>
-          </div>
-  
-  <div  class="bottom" >
-          <div class="bankingDetails">
-              <p>Banking Details</p>
-              <p>${generalData?.bank_details || ""}</p>
-          </div>
-    
-          <div class="pricing">
-              
-              <p class="amount">Totals</p> 
-              <div class="amount">
-              <p class="amount">Invoice Total: </p>  <p> R${
-                generalData?.total_amount || ""
-              }</p>
-          </div>
-          <div class="amount">
-              <p class="amount">Amount paid:  </p>R${
-                generalData?.amount_paid || ""
-              }</p>
-          </div>
-          <div class="amount"> 
-              <p class="amount" >Amount due: 	 </p> <p> R${
-                generalData?.amount_due || ""
-              }</p>
-              </div>
-          </div>
-      </div>
-          
-        </div>
-
-        <script src="./scriptForPdfConversion.js"></script>
-  </body>
-  </html>`;
-
-  return htmlContent;
-}
-
-export default GenerateInvoiceStatment;
+export { compileHtmlContent, convertToPdfAndStore, extractDataFromDB };
