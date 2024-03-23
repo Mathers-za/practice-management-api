@@ -1,17 +1,26 @@
 import pool from "../config/dbconfig.js";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import handlebars from "handlebars";
 import { readFileSync } from "fs";
-
 import { v4 as uuidv4 } from "uuid";
 import puppeteer from "puppeteer";
 
-async function compileHtmlContent(templatePath, data) {
+import { format } from "date-fns";
+
+function compileHtmlContent(templatePath, data) {
   // compiles passed data and html template and retruns html content //pass in absolute path to file you want to read
   try {
     const source = readFileSync(templatePath, "utf-8");
     const template = handlebars.compile(source);
+    handlebars.registerHelper("formatDate", (date, desiredFormat) => {
+      return format(new Date(date), desiredFormat);
+    });
+
+    handlebars.registerHelper("compareAmountDue", (amountDue, refAmount) => {
+      return parseFloat(amountDue) <= 0;
+    });
+
     handlebars.registerHelper("defaultValue", (value, defaultValue) => {
       return value ? value : defaultValue;
     });
@@ -25,38 +34,33 @@ async function compileHtmlContent(templatePath, data) {
 }
 
 async function convertToPdfAndStore(htmlContent) {
-  // converts html content to pdf and stores it in file system
-  const uniquePdfId = uuidv4().slice(0, 5);
-  const currentDirectory = dirname(fileURLToPath(import.meta.url));
-  console.log(currentDirectory);
-  const pathOfPdfFolder = join(currentDirectory, "../pdfStatmentsStore");
-  console.log(pathOfPdfFolder);
-  const pdfFilePath = join(
-    pathOfPdfFolder,
-    `${uniquePdfId}-invoiceStatment.pdf`
-  );
-
-  console.log("PDF path " + pdfFilePath);
-
   try {
+    const uniquePdfId = uuidv4().slice(0, 5);
+    const currentDirectory = dirname(fileURLToPath(import.meta.url));
+    const pathOfPdfFolder = join(currentDirectory, "../pdfStatmentsStore");
+
+    const pdfFilePath = join(
+      pathOfPdfFolder,
+      `${uniquePdfId}-invoiceStatment.pdf`
+    );
+
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.setContent(htmlContent);
 
     await page.pdf({
-      printBackground: true,
-      format: "A4",
       path: pdfFilePath,
+      format: "A4",
+      printBackground: true,
     });
 
     await browser.close();
-  } catch (error) {
-    console.error(error);
 
+    return uniquePdfId;
+  } catch (error) {
+    console.error("Error converting HTML to PDF:", error);
     throw error;
   }
-
-  return uniquePdfId;
 }
 
 async function extractDataFromDB(
