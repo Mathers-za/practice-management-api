@@ -1,9 +1,10 @@
 import pool from "../config/dbconfig.js";
-import { dirname, join, resolve } from "path";
+import path from "path";
 import { fileURLToPath } from "url";
+
 import handlebars from "handlebars";
-import { readFileSync } from "fs";
-import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+
 import puppeteer from "puppeteer";
 
 import { format } from "date-fns";
@@ -11,13 +12,13 @@ import { format } from "date-fns";
 function compileHtmlContent(templatePath, data) {
   // compiles passed data and html template and retruns html content //pass in absolute path to file you want to read
   try {
-    const source = readFileSync(templatePath, "utf-8");
+    const source = fs.readFileSync(templatePath, "utf-8");
     const template = handlebars.compile(source);
     handlebars.registerHelper("formatDate", (date, desiredFormat) => {
       return format(new Date(date), desiredFormat);
     });
 
-    handlebars.registerHelper("compareAmountDue", (amountDue, refAmount) => {
+    handlebars.registerHelper("compareAmountDue", (amountDue) => {
       return parseFloat(amountDue) <= 0;
     });
 
@@ -33,15 +34,24 @@ function compileHtmlContent(templatePath, data) {
   }
 }
 
-async function convertToPdfAndStore(htmlContent) {
+async function convertToPdfAndStore(htmlContent, uniqueIdentifier) {
   try {
-    const uniquePdfId = uuidv4().slice(0, 5);
-    const currentDirectory = dirname(fileURLToPath(import.meta.url));
-    const pathOfPdfFolder = join(currentDirectory, "../pdfStatmentsStore");
+    const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+    const pathOfPdfFolder = path.join(
+      currentDirectory,
+      "../pdfStatementsStore"
+    );
 
-    const pdfFilePath = join(
+    if (!fs.existsSync(pathOfPdfFolder)) {
+      fs.mkdirSync(pathOfPdfFolder, { recursive: true });
+      console.log("created file path");
+    } else {
+      console.log("file path already exists");
+    }
+
+    const pdfFilePath = path.join(
       pathOfPdfFolder,
-      `${uniquePdfId}-invoiceStatment.pdf`
+      `${uniqueIdentifier}-invoiceStatment.pdf`
     );
 
     const browser = await puppeteer.launch();
@@ -55,8 +65,6 @@ async function convertToPdfAndStore(htmlContent) {
     });
 
     await browser.close();
-
-    return uniquePdfId;
   } catch (error) {
     console.error("Error converting HTML to PDF:", error);
     throw error;

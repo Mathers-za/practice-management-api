@@ -217,11 +217,11 @@
                 <p>Medical Aid</p>
                  {{#if medicalAidData}}
                  
-                <p> {{defaultValue medicalAidData.medaid_name  ""}} - {{
-    medicalAidData?.medaid_scheme  ""}}
+                <p> {{defaultValue medicalAidData.medaid_name  ""}} - {{defaultValue
+    medicalAidData.medaid_scheme  ""}}
   </p>
                 <p> Membership #: {{defaultValue medicalAidData.medaid_number  ""}}</p>
-                <p> Patient: {{generalData?.patient_first_name  ""}} {{defaultValue 
+                <p> Patient: {{defaultValue generalData.patient_first_name  ""}} {{defaultValue 
     generalData.patient_last_name  ""}}
   </p>
                 <p>ID: {{defaultValue medicalAidData.gov_id  ""}}</p>
