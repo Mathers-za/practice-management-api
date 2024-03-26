@@ -34,49 +34,26 @@ function compileHtmlContent(templatePath, data) {
   }
 }
 
-async function convertToPdfAndStore(htmlContent, uniqueIdentifier) {
+async function convertToPdfAndStore(htmlContent) {
   try {
-    const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
-    const pathOfPdfFolder = path.join(
-      currentDirectory,
-      "../pdfStatementsStore"
-    );
-
-    if (!fs.existsSync(pathOfPdfFolder)) {
-      fs.mkdirSync(pathOfPdfFolder, { recursive: true });
-      console.log("created file path");
-    } else {
-      console.log("file path already exists");
-    }
-
-    const pdfFilePath = path.join(
-      pathOfPdfFolder,
-      `${uniqueIdentifier}-invoiceStatment.pdf`
-    );
-
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.setContent(htmlContent);
 
-    await page.pdf({
-      path: pdfFilePath,
+    const buffer = await page.pdf({
       format: "A4",
       printBackground: true,
     });
 
     await browser.close();
+    return buffer;
   } catch (error) {
     console.error("Error converting HTML to PDF:", error);
     throw error;
   }
 }
 
-async function extractDataFromDB(
-  invoice_id,
-  profile_id,
-  appointment_id,
-  patient_id
-) {
+async function extractDataFromDB(profile_id, appointment_id, patient_id) {
   const generalDataQuery = `SELECT INVOICE_NUMBER,
 	APPOINTMENTS.ID AS APPID,
 	INVOICE_START_DATE,
@@ -112,8 +89,8 @@ JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
 JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
 WHERE USER_PROFILE.ID = $1
-	AND APPOINTMENTS.ID = $2 AND
-     INVOICES.ID = $3
+	AND APPOINTMENTS.ID = $2
+   
          `;
 
   const icd10DataQuery = `select * from icd_10_codes
@@ -128,7 +105,7 @@ WHERE USER_PROFILE.ID = $1
   try {
     const [generalDataResult, icdBillingDataResult, medicalAidDataResult] =
       await Promise.all([
-        pool.query(generalDataQuery, [profile_id, appointment_id, invoice_id]),
+        pool.query(generalDataQuery, [profile_id, appointment_id]),
         pool.query(icd10DataQuery, [appointment_id]),
         pool.query(medicalAidDataQuery, [profile_id, patient_id]),
       ]);

@@ -33,7 +33,7 @@ router.post("/create:id", async (req, res) => {
   try {
     const result = await pool.query(
       `INSERT INTO invoices(invoice_number,invoice_title,invoice_start_date,invoice_end_date,
-       appointment_id,paid)values($1,$2,$3,$4,$5,$6) returning invoice_number,id `,
+       appointment_id,paid)values($1,$2,$3,$4,$5,$6) returning * `,
       [
         invoiceNumber,
         invoice_title,
@@ -43,34 +43,8 @@ router.post("/create:id", async (req, res) => {
         paid,
       ]
     );
-
-    if (
-      result.rowCount > 0 &&
-      result.rows[0].id &&
-      result.rows[0].invoice_number
-    ) {
-      try {
-        const data = await extractDataFromDB(
-          result.rows[0].id,
-          profile_id,
-          appointmentId,
-          patient_id
-        );
-        const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
-        console.log(currentDirectory);
-        const pathToHtmlTemplate = path.join(
-          currentDirectory,
-          "../templates/invoiceStatement.hbs"
-        );
-        const htmlContent = compileHtmlContent(pathToHtmlTemplate, data);
-        await convertToPdfAndStore(htmlContent, invoiceNumber);
-        res.status(201).send("invoice Successfully created");
-      } catch (error) {
-        console.error(error);
-        res.status(500).json(error.message);
-      }
-    } else {
-      res.status(500).json(error.message);
+    if (result.rowCount > 0) {
+      res.status(201).json(result.rows[0]);
     }
   } catch (error) {
     console.error(error);
@@ -255,24 +229,19 @@ router.get(`/filteredView`, async (req, res) => {
   }
 });
 
-router.get(`/retrieveInvoiceStatement:id`, async (req, res) => {
-  const invoiceNumber = req.params.id;
-  const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
-  console.log("current directory ", currentDirectory);
-  const filePath = path.join(
-    currentDirectory,
-    "../pdfStatementsStore",
-    `${invoiceNumber}-invoiceStatment.pdf`
-  );
+router.get(`/retrieveInvoiceStatement`, async (req, res) => {
+  const { invoiceNumber, profileId, appointmentId, patientId } = req.query;
 
-  try {
-    const pdfFile = fs.readFileSync(filePath);
-    res.contentType("application/pdf");
-    res.send(pdfFile);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
-  }
+  const data = await extractDataFromDB(profileId, appointmentId, patientId);
+  const htmlTemplatePath = path.join(
+    process.cwd(),
+    "templates",
+    "invoiceStatement.hbs"
+  );
+  const htmlContent = compileHtmlContent(htmlTemplatePath, data);
+  const buffer = await convertToPdfAndStore(htmlContent, invoiceNumber);
+
+  res.contentType("application/json").status(200).send(buffer);
 });
 
 export default router;
