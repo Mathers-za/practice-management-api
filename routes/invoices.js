@@ -4,15 +4,13 @@ import pool from "../config/dbconfig.js";
 import { v4 as uuidv4 } from "uuid";
 import updateRecords from "../helperFunctions/patchRoute.js";
 import path, { join } from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
+import nodemailer from "nodemailer";
 
 import {
   compileHtmlContent,
   extractDataFromDB,
   convertToPdfAndStore,
 } from "../helperFunctions/pdfConversion.js";
-import { error } from "console";
 
 const router = express.Router();
 
@@ -20,15 +18,8 @@ router.post("/create:id", async (req, res) => {
   const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
   const appointmentId = req.params.id;
 
-  const {
-    invoice_title,
-    invoice_start_date,
-    invoice_end_date,
-    paid,
-    appointment_id,
-    profile_id,
-    patient_id,
-  } = req.body;
+  const { invoice_title, invoice_start_date, invoice_end_date, paid } =
+    req.body;
 
   try {
     const result = await pool.query(
@@ -69,40 +60,6 @@ router.get(`/view:id`, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json(error.message);
-  }
-});
-
-router.post(`/generateUpdatedInvoiceStatement`, async (req, res) => {
-  const { appointment_id, profile_id, patient_id, invoice_number, invoice_id } =
-    req.body;
-
-  try {
-    const data = await extractDataFromDB(
-      invoice_id,
-      profile_id,
-      appointment_id,
-      patient_id
-    );
-
-    try {
-      const pathToHtmlTemplate = path.join(
-        process.cwd(),
-        "templates",
-        "invoiceStatement.hbs"
-      );
-
-      const html = compileHtmlContent(pathToHtmlTemplate, data);
-
-      try {
-        await convertToPdfAndStore(html, invoice_number);
-      } catch (error) {
-        console.error(error);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  } catch (error) {
-    console.error(error);
   }
 });
 
@@ -242,6 +199,57 @@ router.get(`/retrieveInvoiceStatement`, async (req, res) => {
   const buffer = await convertToPdfAndStore(htmlContent, invoiceNumber);
 
   res.contentType("application/json").status(200).send(buffer);
+});
+
+router.post(`/sendInvoiceStatment`, async (req, res) => {
+  const { profileId, appointmentId, patientId, invoiceNumber } = req.body;
+  console.log(
+    `profile id = ${profileId}, appointmentId = ${appointmentId}, patientId = ${patientId}`
+  );
+  try {
+    const data = await extractDataFromDB(profileId, appointmentId, patientId);
+    console.log(`data extrcated is ${data?.generalData?.practice_name}`);
+    const pathToPdfTemplate = path.join(
+      process.cwd(),
+      "templates",
+      "invoiceStatement.hbs"
+    );
+    const htmlContent = compileHtmlContent(pathToPdfTemplate, data);
+    const pdfBuffer = await convertToPdfAndStore(htmlContent);
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: "danielmathers97@gmail.com",
+        pass: "qfvi vooe ksmi tcpp",
+      },
+    });
+
+    await transporter.sendMail({
+      from: "danielmathers97@gmail.com",
+      to: data.generalData.patient_email,
+      subject: "Invoice Statment for your chiropractic appointment",
+      text: `Please find your invoice Statement for your appointment with ${
+        data?.generalData?.user_first_name || ""
+      } ${data?.generalData?.user_last_name || ""}`,
+
+      attachments: [
+        {
+          filename: `${invoiceNumber}-invoiceStatemnt.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    res.status(200).send("sent email successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error.message);
+  }
 });
 
 export default router;
