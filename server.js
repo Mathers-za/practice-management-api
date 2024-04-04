@@ -18,6 +18,8 @@ import sessionValidationRoute from "./routes/sessionValidation.js";
 import treatmentNotesRoute from "./routes/treatmentNotes.js";
 import paymentRoute from "./routes/payments.js";
 import financialsRoute from "./routes/financials.js";
+import emailNotificationsRoute from "./routes/customEmails.js";
+import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -59,6 +61,7 @@ app.use("/appointmentTypes", appointmentTypesRoute);
 app.use("/appointments", appointmentsRoute);
 app.use("/invoices", invoiceRoute);
 app.use("/predefinedIcd10", predefInedIcd10CodesRoute);
+app.use("/emailNotifications", emailNotificationsRoute);
 app.use("/icd10Codes", icd10CodeRoute);
 app.use("/treatmentNotes", treatmentNotesRoute);
 app.use("/financials", financialsRoute);

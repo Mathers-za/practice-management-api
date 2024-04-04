@@ -39,7 +39,7 @@ router.post("/create", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id)values($1,$2,$3,$4,$5,$6) returning *",
+      "INSERT INTO practice_details(practice_name,practice_num,practice_address,billing_address,profile_id,bank_details)values($1,$2,$3,$4,$5,$6) returning *",
       [
         practice_name,
         practice_num,

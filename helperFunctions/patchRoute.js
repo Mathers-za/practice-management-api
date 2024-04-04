@@ -26,6 +26,7 @@ async function updateRecords(req, res, tableName, idColumnName) {
 
     if (result.rowCount > 0) {
       res.status(201).json(result.rows[0]);
+      return result.rows[0];
     } else {
       res.status(204);
     }

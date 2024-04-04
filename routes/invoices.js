@@ -3,7 +3,7 @@ import express from "express";
 import pool from "../config/dbconfig.js";
 import { v4 as uuidv4 } from "uuid";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import path, { join } from "path";
+import path from "path";
 import nodemailer from "nodemailer";
 
 import {

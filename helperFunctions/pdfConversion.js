@@ -1,6 +1,4 @@
 import pool from "../config/dbconfig.js";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import handlebars from "handlebars";
 import fs from "fs";
@@ -23,6 +21,7 @@ function compileHtmlContent(templatePath, data) {
     });
 
     handlebars.registerHelper("defaultValue", (value, defaultValue) => {
+      //default value is the value you input that will show if the inputted data does not exist
       return value ? value : defaultValue;
     });
     const html = template(data);
