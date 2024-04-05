@@ -74,7 +74,8 @@ router.post(`/sendConfirmationEmail`, async (req, res) => {
       await sendNotificationEmail(
         compiledSubject,
         compiledBody,
-        data.patient_email
+        data.patient_email,
+        "html"
       );
       res.status(200).json("sucessfully sent confirmation email");
     } catch (error) {
