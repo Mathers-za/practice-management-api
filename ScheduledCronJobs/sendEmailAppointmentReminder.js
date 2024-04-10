@@ -9,14 +9,14 @@ import {
 } from "../helperFunctions/customEmailFunctions.js";
 
 const job = new CronJob(
-  "00 49 12 * * 1-7",
+  "00 48 12 * * 1-7",
   sendBulkEmailReminders,
   null,
   true,
   "Africa/Johannesburg"
 );
 
-async function checkAppointmentsScheduledForTomorrow() {
+async function fetchAppointmentsScheduledForTomorrow() {
   try {
     const tomorrowsDate = format(addDays(new Date(), 1), "yyyy-MM-dd");
     console.log(tomorrowsDate);
@@ -62,10 +62,10 @@ join email_customizations ON email_customizations.profile_id = user_profile.id
 async function sendBulkEmailReminders() {
   const arrayOfReciepentsAndThierRespectiveData = [];
   try {
-    const data = await checkAppointmentsScheduledForTomorrow();
+    const appointments = await fetchAppointmentsScheduledForTomorrow();
     console.log("ran sendemialReminders scripit");
-    console.log(data);
-    data.forEach((appointment) => {
+    console.log(appointments);
+    appointments.forEach((appointment) => {
       const processedSubjectData = processDataForHbsCompatibilty(
         appointment,
         "reminder_subject"

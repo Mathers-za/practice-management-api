@@ -168,6 +168,7 @@ router.get("/filter:id", async (req, res) => {
   const properties = Object.keys(data);
   const values = Object.values(data);
   const dynamicFilter = [];
+  console.log(data);
 
   properties.forEach((property, index) => {
     if (property === "start_date") {
