@@ -19,7 +19,7 @@ import treatmentNotesRoute from "./routes/treatmentNotes.js";
 import paymentRoute from "./routes/payments.js";
 import financialsRoute from "./routes/financials.js";
 import emailNotificationsRoute from "./routes/customEmails.js";
-import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job
+//import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job- disbaled in development
 
 const app = express();
 const port = process.env.SERVER_PORT;

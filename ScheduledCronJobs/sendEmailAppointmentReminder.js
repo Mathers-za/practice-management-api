@@ -9,7 +9,7 @@ import {
 } from "../helperFunctions/customEmailFunctions.js";
 
 const job = new CronJob(
-  "00 48 12 * * 1-7",
+  "00 28 16 * * 1-7",
   sendBulkEmailReminders,
   null,
   true,
@@ -45,7 +45,7 @@ JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = APPOINTMENT_TYPE.PROFILE_ID
 JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
 join email_customizations ON email_customizations.profile_id = user_profile.id
-            WHERE APPOINTMENT_DATE = $1 AND SEND_EMAIL_REMINDER = $2`,
+            WHERE APPOINTMENT_DATE = $1 AND SEND_REMINDER = $2`,
 
       [tomorrowsDate, true]
     );

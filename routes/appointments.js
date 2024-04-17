@@ -11,12 +11,22 @@ router.post("/createAppointment", async (req, res) => {
     end_time,
     appointment_type_id,
     patient_id,
+    sent_confirmation,
+    send_reminder,
   } = req.body;
 
   try {
     const result = await pool.query(
-      "INSERT INTO appointments(appointment_date,start_time,end_time,appointment_type_id,patient_id)values($1,$2,$3,$4,$5) returning *",
-      [appointment_date, start_time, end_time, appointment_type_id, patient_id]
+      "INSERT INTO appointments(appointment_date,start_time,end_time,appointment_type_id,patient_id, send_reminder, sent_confirmation)values($1,$2,$3,$4,$5,$6,$7) returning *",
+      [
+        appointment_date,
+        start_time,
+        end_time,
+        appointment_type_id,
+        patient_id,
+        send_reminder,
+        sent_confirmation,
+      ]
     );
 
     res.status(201).json(result.rows[0]);

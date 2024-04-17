@@ -89,6 +89,7 @@ function insertIntoWord(word, insertValue) {
 }
 
 function processDataForHbsCompatibilty(dataObj, columnName) {
+  console.log("inside bhscomptibilty");
   const wordArr = dataObj[columnName].split(" ");
   let formattedSentence = "";
 
@@ -107,11 +108,14 @@ function processDataForHbsCompatibilty(dataObj, columnName) {
   });
 
   if (columnName === "reminder_body" || columnName === "confirmation_body") {
+    console.log("mde it to teh array splitting part"); //mkes it here
     constructedArray.push("</p>");
     constructedArray.unshift("<p>");
-    formattedSentence = constructedArray.join(" ");
+    formattedSentence = constructedArray.join(" "); //FIXME not kaing into if block hence not relace \ns with </br> also simply return . just rteurn value straight
     if (formattedSentence.includes("\n")) {
+      //doesnt make it here even
       formattedSentence = formattedSentence.replaceAll("\n", "<br>");
+      console.log(formattedSentence);
     }
     return { [columnName]: formattedSentence };
   } else {
