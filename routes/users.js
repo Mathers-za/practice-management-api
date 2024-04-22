@@ -53,4 +53,25 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
   res.status(200).json({ message: "Login successful", data: req.user });
 });
 
+router.post(`/checkEmailExistence`, async (req, res) => {
+  const { email } = req.body;
+  console.log("email existence endpoint fires");
+
+  try {
+    const result = await pool.query(
+      `Select email from users where email = $1`,
+      [email]
+    );
+    if (result.rowCount > 0) {
+      res.status(409).json({ errorMessage: "Email Address already exists" });
+    }
+    if (result.rowCount === 0) {
+      res.status(200).json("email adress is available to use");
+    }
+  } catch (error) {
+    console.error(error);
+    res.json(error.message);
+  }
+});
+
 export default router;
