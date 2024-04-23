@@ -5,29 +5,6 @@ import passport from "../config/passportConfig.js";
 
 const router = express.Router();
 
-router.get("/view", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM users");
-
-    if (result.rowCount > 0) {
-      res.status(200).json({
-        success: true,
-        message: "successfully retrieved data",
-        data: result.rows,
-      });
-    } else {
-      res.status(204).json();
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
-  }
-});
-
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
