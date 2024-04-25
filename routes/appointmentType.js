@@ -1,4 +1,4 @@
-import express from "express";
+import express, { query } from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
 
@@ -96,6 +96,49 @@ router.delete("/delete:id", async (req, res) => {
       message: "internal server error",
       error: error.message,
     });
+  }
+});
+
+router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
+  const profileId = req.params.id;
+  console.log(profileId);
+
+  if (!profileId) {
+    res
+      .status(400)
+      .json({ message: "Profile id missing", name: "Bad Request" });
+    return;
+  }
+
+  async function getIcds(appointmentTypesObj) {
+    const promises = appointmentTypesObj.rows.map(async (type) => {
+      const myArr = await pool.query(
+        "SELECT * FROM predefined_icd10_codes WHERE appointment_type_id = $1",
+        [type.id]
+      );
+      return myArr.rows;
+    });
+
+    return Promise.all(promises);
+  }
+
+  try {
+    const appointmentTypeData = await pool.query(
+      "SELECT * FROM appointment_type WHERE profile_id= $1",
+      [profileId]
+    );
+    if (appointmentTypeData.rowCount > 0) {
+      const icdArray = await getIcds(appointmentTypeData);
+      res.status(200).json({
+        predefinedIcd10Data: icdArray,
+        appointmentTypeData: appointmentTypeData.rows,
+      });
+    } else {
+      res.status(200).json([]);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
