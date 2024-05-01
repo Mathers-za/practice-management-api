@@ -80,16 +80,14 @@ async function sendBulkEmailsInParallel(arrayOfObjectsData) {
 }
 
 function insertIntoWord(word, insertValue) {
-  console.log("here");
   const letterArr = word.split("");
-  console.log(letterArr);
+
   letterArr.splice(letterArr.lastIndexOf("{") + 1, 0, insertValue, " ");
   const newWord = letterArr.join("");
   return newWord;
 }
 
 function processDataForHbsCompatibilty(dataObj, columnName) {
-  console.log("inside bhscomptibilty");
   const wordArr = dataObj[columnName].split(" ");
   let formattedSentence = "";
 
@@ -108,7 +106,6 @@ function processDataForHbsCompatibilty(dataObj, columnName) {
   });
 
   if (columnName === "reminder_body" || columnName === "confirmation_body") {
-    console.log("mde it to teh array splitting part"); //mkes it here
     constructedArray.push("</p>");
     constructedArray.unshift("<p>");
     formattedSentence = constructedArray.join(" "); //FIXME not kaing into if block hence not relace \ns with </br> also simply return . just rteurn value straight

@@ -101,7 +101,6 @@ router.delete("/delete:id", async (req, res) => {
 
 router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
   const profileId = req.params.id;
-  console.log(profileId);
 
   if (!profileId) {
     res
@@ -116,6 +115,7 @@ router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
         "SELECT * FROM predefined_icd10_codes WHERE appointment_type_id = $1",
         [type.id]
       );
+
       return myArr.rows;
     });
 

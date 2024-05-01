@@ -19,8 +19,7 @@ const job = new CronJob(
 async function fetchAppointmentsScheduledForTomorrow() {
   try {
     const tomorrowsDate = format(addDays(new Date(), 1), "yyyy-MM-dd");
-    console.log(tomorrowsDate);
-    console.log(tomorrowsDate);
+
     const result = await pool.query(
       `select PATIENTS.EMAIL AS PATIENT_EMAIL, 
       PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,

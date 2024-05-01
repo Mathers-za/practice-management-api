@@ -43,7 +43,7 @@ router.delete("/delete:id", async (req, res) => {
 router.get("/viewAll:id", async (req, res) => {
   //get all patients endpoint
   const profileId = req.params.id;
-  console.log(profileId);
+
   try {
     const result = await pool.query(
       "select * from patients where profile_id= $1 ",

@@ -151,7 +151,6 @@ router.post(`/customizationErrorCheck`, async (req, res) => {
         (word.includes("}}") && !word.includes("{{")) ||
         (word.includes("{{") && !word.includes("}}"))
       ) {
-        console.log("the error word " + word);
         throw new Error(
           "Variables must follow the format of {{the_variable ex: user_name etc}} \n in order for your customization to be correct \n Do not use curley braces => { } anywhere in your customization \n other than the variables "
         );

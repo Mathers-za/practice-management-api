@@ -37,7 +37,7 @@ router.get("/view:id", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT * FROM predefined_icd10_codes where appointment_type_id = $1",
+      "SELECT * FROM predefined_icd10_codes where appointment_type_id = $1 ",
       [appointment_type_id]
     );
 
@@ -59,18 +59,59 @@ router.get("/view:id", async (req, res) => {
 router.delete("/delete:id", async (req, res) => {
   //chnaged
   const preDfinedIcd10Id = req.params.id;
-  console.log(req.body);
 
   try {
     const result = await pool.query(
-      `DELETE FROM predefined_icd10_codes WHERE id = $1`,
+      `DELETE FROM predefined_icd10_codes WHERE id = $1 returning *`,
       [preDfinedIcd10Id]
     );
     if (result.rowCount > 0) {
-      res.status(200).json({ message: "deletion was a success" });
+      res.status(200).json(result.rows[0]);
     }
   } catch (error) {
     console.error(error);
+  }
+});
+
+router.post(`/batchCreate:id`, async (req, res) => {
+  const arrayOfIcds = req.body;
+  const appTypeid = req.params.id;
+
+  try {
+    const arrayOfPromises = arrayOfIcds.map(async (icdObj) => {
+      await pool.query(
+        "INSERT INTO predefined_icd10_codes(icd10_code,procedural_code,price,appointment_type_id)VALUES($1,$2,$3,$4)",
+        [icdObj.icd10_code, icdObj.procedural_code, icdObj.price, appTypeid]
+      );
+    });
+
+    const result = await Promise.all(arrayOfPromises);
+    console.log(result);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+router.delete("/batchDeletion", async (req, res) => {
+  const arrayOfIcdsToDelete = req.body;
+
+  console.log("made it here");
+  console.log(arrayOfIcdsToDelete);
+  if (!arrayOfIcdsToDelete) {
+    res.status(400).json({ message: " this is thre porblem" });
+  }
+  try {
+    const arrayOfPromises = arrayOfIcdsToDelete.map(async (id) => {
+      await pool.query("DELETE FROM predefined_icd10_codes WHERE id = $1", [
+        id,
+      ]);
+    });
+
+    await Promise.all(arrayOfPromises);
+    res.status(200).json("All icds deleted");
+  } catch (error) {
+    console.error(error.message);
   }
 });
 
