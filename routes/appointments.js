@@ -237,4 +237,64 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
   }
 });
 
+router.get(`/searchByFilter:id`, async (req, res) => {
+  const profileId = req.params.id;
+  const { searchSubString, start_date, end_date } = req.query;
+
+  if (!profileId) {
+    res.status(400).json("ProfileId not provided");
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+    PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+    APPOINTMENT_DATE,
+    USER_PROFILE.FIRST_NAME AS PRACTITIONER_FIRST_NAME,
+    USER_PROFILE.LAST_NAME AS PRACTITIONER_LAST_NAME,
+    START_TIME,
+    END_TIME,
+    PRACTICE_NAME,
+    PRACTICE_ADDRESS,
+    APPOINTMENT_NAME,
+    APPOINTMENT_TYPE.PRICE AS APPTYPE_PRICE,
+    APPOINTMENT_TYPE.ID AS APPTYPE_ID, 
+    invoice_status,
+    invoice_number,
+    invoice_title,
+    USER_PROFILE.ID AS PROFILE_ID,
+    APPOINTMENTS.ID AS APPOINTMENT_ID,
+    PATIENTS.ID AS PATIENT_ID,
+    FINANCIALS.AMOUNT_DUE,
+    FINANCIALS.TOTAL_AMOUNT,
+    FINANCIALS.AMOUNT_PAID
+  FROM APPOINTMENTS
+  JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+  JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
+  LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
+  JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
+  JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
+  JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
+  where appointment_date >= $1 and appointment_date <= $2 ${
+    searchSubString
+      ? " and (lower(patients.first_name )like  $3||'%' or lower(patients.last_name) like $3||'%'  or lower(patients.email) like $3||'%'  or lower(patients.contact_number) like $3||'%' )  "
+      : ""
+  } `,
+      searchSubString
+        ? [start_date, end_date, searchSubString.toLocaleLowerCase()]
+        : [start_date, end_date]
+    );
+
+    if (result.rowCount > 0) {
+      res.status(200).json(result.rows);
+    } else {
+      res.status(200).json([]);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json("error " + error.message);
+  }
+});
+
 export default router;
