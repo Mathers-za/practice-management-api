@@ -1,6 +1,7 @@
-import express from "express";
+import express, { query } from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validate } from "uuid";
 
 const router = express.Router();
 
@@ -294,6 +295,105 @@ router.get(`/searchByFilter:id`, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json("error " + error.message);
+  }
+});
+
+router.get(`/appointmentsPagination:id`, async (req, res) => {
+  if (!req.params.id) {
+    res.status(400).json("No profile id provided");
+    return;
+  }
+  const profileId = req.params.id;
+  const { pageNumber, pageSize, filterParams } = req.query;
+  const { start_date, end_date, search } = filterParams;
+  const values = [profileId, start_date, end_date];
+  if (!start_date || !end_date || !pageSize || !pageNumber) {
+    res.status(400).json("Have not provdied all the nesccasry parameters");
+    return;
+  }
+
+  let lowerCaseSearch = "";
+
+  if (search) {
+    lowerCaseSearch = search.toLocaleLowerCase();
+  }
+
+  const offset = (parseInt(pageNumber) - 1) * parseInt(pageSize);
+  const limit = parseInt(pageSize);
+  let queryString = `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+  PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+  APPOINTMENT_DATE,
+  USER_PROFILE.FIRST_NAME AS PRACTITIONER_FIRST_NAME,
+  USER_PROFILE.LAST_NAME AS PRACTITIONER_LAST_NAME,
+  START_TIME,
+  END_TIME,
+  PRACTICE_NAME,
+  PRACTICE_ADDRESS,
+  APPOINTMENT_NAME,
+  APPOINTMENT_TYPE.PRICE AS APPTYPE_PRICE,
+  APPOINTMENT_TYPE.ID AS APPTYPE_ID, 
+  invoice_status,
+  invoice_number,
+  invoice_title,
+  USER_PROFILE.ID AS PROFILE_ID,
+  APPOINTMENTS.ID AS APPOINTMENT_ID,
+  PATIENTS.ID AS PATIENT_ID,
+  FINANCIALS.AMOUNT_DUE,
+  FINANCIALS.TOTAL_AMOUNT,
+  FINANCIALS.AMOUNT_PAID
+FROM APPOINTMENTS
+JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
+LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
+JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
+JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
+JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
+ where user_profile.id = $1 and appointment_date >= $2  and appointment_date <= $3 `;
+
+  if (lowerCaseSearch) {
+    queryString +=
+      "and (lower(patients.first_name)  like $4||'%' or lower(patients.last_name) like $4||'%') limit $5 offset $6";
+    values.push(lowerCaseSearch, limit, offset);
+  } else {
+    queryString += "limit $4 offset $5";
+    values.push(limit, offset);
+  }
+
+  let totalCount = "";
+  try {
+    if (start_date && end_date && lowerCaseSearch) {
+      totalCount = await pool.query(
+        "select count(*) from appointments JOIN patients ON patients.id = appointments.patient_id where profile_id = $1 and appointment_date >= $2 and appointment_date <= $3 and (lower(patients.first_name)  like $4||'%' or lower(patients.last_name) like $4||'%')",
+        [profileId, start_date, end_date, lowerCaseSearch]
+      );
+    } else {
+      totalCount = await pool.query(
+        "select count(*) from appointments JOIN patients ON patients.id = appointments.patient_id where profile_id = $1 and appointment_date >= $2 and appointment_date <= $3",
+        [profileId, start_date, end_date]
+      );
+    }
+
+    const totalPages = Math.max(
+      Math.floor(parseInt(totalCount.rows[0].count) / parseInt(pageSize)),
+      1
+    );
+    console.log(totalPages);
+
+    const dataChunk = await pool.query(queryString, values);
+
+    if (dataChunk.rowCount > 0) {
+      res.status(200).json({
+        metaData: {
+          totalPages: totalPages,
+        },
+        dataChunk: dataChunk.rows,
+      });
+    } else {
+      res.status(200).json({ totalPages: totalPages, dataChunk: [] });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error.message);
   }
 });
 
