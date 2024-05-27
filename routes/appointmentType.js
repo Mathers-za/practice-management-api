@@ -21,30 +21,17 @@ router.post("/create:id", async (req, res) => {
 });
 
 router.get("/viewAll:id", async (req, res) => {
-  if (!req.params.id || !req.query.pageSize || !req.query.page) {
-    res.status(400).json({ message: "Not all parmaters are supplied" });
-  }
   const profile_id = req.params.id;
-  const limit = parseInt(req.query.pageSize);
-  const offset = (parseInt(req.query.page) - 1) * limit;
-
   try {
-    const totalRowCount = await pool.query(
-      `select count(*) from appointment_type where profile_id = $1`,
+    const result = await pool.query(
+      "SELECT * FROM appointment_type where profile_id = $1",
       [profile_id]
     );
-    const totalPages = Math.max(
-      Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
-      1
-    );
-
-    const result = await pool.query(
-      "SELECT * FROM appointment_type where profile_id = $1 offset $2 limit $3",
-      [profile_id, offset, limit]
-    );
-    res
-      .status(200)
-      .json({ data: result.rows, metaData: { totalPages: totalPages } });
+    if (result.rowCount > 0) {
+      res.status(201).json(result.rows);
+    } else {
+      res.status(204).json();
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -114,6 +101,8 @@ router.delete("/delete:id", async (req, res) => {
 
 router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
   const profileId = req.params.id;
+  const limit = parseInt(req.query.pageSize);
+  const offset = (parseInt(req.query.page) - 1) * limit;
 
   if (!profileId) {
     res
@@ -136,22 +125,33 @@ router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
   }
 
   try {
-    const appointmentTypeData = await pool.query(
-      "SELECT * FROM appointment_type WHERE profile_id= $1",
+    const totalRowCount = await pool.query(
+      "select count(*) from appointment_type where profile_id = $1",
       [profileId]
+    );
+    const totalPages = Math.max(
+      Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
+      1
+    );
+    const appointmentTypeData = await pool.query(
+      "SELECT * FROM appointment_type WHERE profile_id= $1 offset $2 limit $3",
+      [profileId, offset, limit]
     );
     if (appointmentTypeData.rowCount > 0) {
       const icdArray = await getIcds(appointmentTypeData);
       res.status(200).json({
-        predefinedIcd10Data: icdArray,
-        appointmentTypeData: appointmentTypeData.rows,
+        data: {
+          predefinedIcd10Data: icdArray,
+          appointmentTypeData: appointmentTypeData.rows,
+        },
+        metaData: { totalPages: totalPages },
       });
     } else {
-      res.status(200).json([]);
+      res.status(200).json({ data: [], metaData: { totalPages: totalPages } });
     }
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error });
   }
 });
 

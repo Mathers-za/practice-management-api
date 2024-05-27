@@ -56,10 +56,65 @@ router.delete(`/delete:id`, async (req, res) => {
   }
 });
 
+router.get(`/getAllProfilePayments:id`, async (req, res) => {
+  if (!req.params.id || !req.query.start_date || !req.query.end_date) {
+    res
+      .status(400)
+      .json({ message: "Not all paramteres or queries were supplied" });
+    return;
+  }
+
+  const profileId = req.params.id;
+  const startDateSearch = req.query.start_date;
+  const endDateSearch = req.query.end_date;
+  const limit = parseInt(req.query.pageSize);
+  const offset = (parseInt(req.query.page) - 1) * limit;
+
+  try {
+    const totalRowCount = await pool.query(
+      `select count(*)  FROM PAYMENTS 
+    JOIN APPOINTMENTS ON APPOINTMENTS.ID = PAYMENTS.APPOINTMENT_ID
+    JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID where patients.profile_id = $1 and payment_date >= $2 and payment_date <= $3 `,
+      [profileId, startDateSearch, endDateSearch]
+    );
+
+    const totalPages = Math.max(
+      Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
+      1
+    );
+
+    const result = await pool.query(
+      `SELECT PAYMENTS.ID AS PAYMENT_ID,
+    APPOINTMENTS.ID AS APPOINTMENT_ID,
+    PAYMENT_METHOD,
+    PAYMENT_DATE,
+    AMOUNT,
+    PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+    PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+    APPOINTMENT_TYPE_ID,
+    PROFILE_ID
+    
+  FROM PAYMENTS 
+  JOIN APPOINTMENTS ON APPOINTMENTS.ID = PAYMENTS.APPOINTMENT_ID
+  JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID where patients.profile_id = $1 and payment_date >= $2 and payment_date <= $3 offset $4 limit $5 `,
+      [profileId, startDateSearch, endDateSearch, offset, limit]
+    );
+
+    res
+      .status(200)
+      .json({ data: result.rows, metaData: { totalPages: totalPages } });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+});
+
 router.get(`/filterview`, async (req, res) => {
   const filterCriteria = req.query.filterCriteria;
   const page = req.query.page || 1;
-  const pageSize = req.query.limit || 15;
+  const pageSize = req.query.limit || 10;
   const keys = Object.keys(filterCriteria);
   const valuesForQuery1 = Object.values(filterCriteria);
   const condtions = [];
