@@ -397,4 +397,64 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
   }
 });
 
+router.get(`/viewAppointmentsByPatient:id`, async (req, res) => {
+  if (!req.query.page || !req.query.pageSize || !req.params.id) {
+    res
+      .status(400)
+      .json({ message: "Not all paprmetrs orquery paramsters are provided" });
+    return;
+  }
+  const patientId = req.params.id;
+  const offset = (parseInt(req.query.page) - 1) * req.query.pageSize;
+  const limit = req.query.pageSize;
+  const query = `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+  PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+  APPOINTMENT_DATE,
+  USER_PROFILE.FIRST_NAME AS PRACTITIONER_FIRST_NAME,
+  USER_PROFILE.LAST_NAME AS PRACTITIONER_LAST_NAME,
+  START_TIME,
+  END_TIME,
+  PRACTICE_NAME,
+  PRACTICE_ADDRESS,
+  APPOINTMENT_NAME,
+  APPOINTMENT_TYPE.PRICE AS APPTYPE_PRICE,
+  APPOINTMENT_TYPE.ID AS APPTYPE_ID, 
+  invoice_status,
+  invoice_number,
+  invoice_title,
+  USER_PROFILE.ID AS PROFILE_ID,
+  APPOINTMENTS.ID AS APPOINTMENT_ID,
+  PATIENTS.ID AS PATIENT_ID,
+  FINANCIALS.AMOUNT_DUE,
+  FINANCIALS.TOTAL_AMOUNT,
+  FINANCIALS.AMOUNT_PAID
+FROM APPOINTMENTS
+JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
+LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
+JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
+JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
+JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patients.id = $1 offset $2 limit $3`;
+
+  try {
+    const rowCount = await pool.query(
+      `select count(*) from appointments where patient_id = $1`,
+      [patientId]
+    );
+    const totalPages = Math.max(
+      Math.ceil(
+        parseInt(rowCount.rows[0].count) / parseInt(req.query.pageSize)
+      ),
+      1
+    );
+    console.log(rowCount.rows[0]);
+
+    const result = await pool.query(query, [patientId, offset, limit]);
+
+    res.status(200).json({ data: result.rows, totalPages: totalPages });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 export default router;
