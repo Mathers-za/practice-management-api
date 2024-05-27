@@ -406,7 +406,7 @@ router.get(`/viewAppointmentsByPatient:id`, async (req, res) => {
   }
   const patientId = req.params.id;
   const offset = (parseInt(req.query.page) - 1) * req.query.pageSize;
-  const limit = req.query.pageSize;
+  const limit = parseInt(req.query.pageSize);
   const query = `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
   PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
   APPOINTMENT_DATE,
@@ -442,16 +442,16 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where pat
       [patientId]
     );
     const totalPages = Math.max(
-      Math.ceil(
-        parseInt(rowCount.rows[0].count) / parseInt(req.query.pageSize)
-      ),
+      Math.ceil(parseInt(rowCount.rows[0].count) / limit),
       1
     );
     console.log(rowCount.rows[0]);
 
     const result = await pool.query(query, [patientId, offset, limit]);
 
-    res.status(200).json({ data: result.rows, totalPages: totalPages });
+    res
+      .status(200)
+      .json({ data: result.rows, metaData: { totalPages: totalPages } });
   } catch (error) {
     console.error(error);
   }

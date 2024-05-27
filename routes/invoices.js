@@ -254,4 +254,47 @@ router.post(`/sendInvoiceStatment`, async (req, res) => {
   }
 });
 
+router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
+  console.log(req.params.id);
+  if (!req.params.id || !req.query.page || !req.query.pageSize) {
+    res
+      .status(400)
+      .json({ message: "Not all paramters or queries were supplied" });
+    return;
+  }
+  console.log(req.params.id);
+  const patientId = req.params.id;
+  const limit = parseInt(req.query.pageSize);
+  const offset = (parseInt(req.query.page) - 1) * limit;
+
+  try {
+    const totalRowCount = await pool.query(
+      `select count (*)  FROM INVOICES
+  JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
+  JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+  where appointments.patient_id= $1`,
+      [patientId]
+    );
+    const totalPages = Math.max(
+      Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
+      1
+    );
+
+    const result = await pool.query(
+      `select * FROM INVOICES
+    JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
+    JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+    where appointments.patient_id = $1 offset $2 limit $3`,
+      [patientId, offset, limit]
+    );
+
+    res
+      .status(200)
+      .json({ data: result.rows, metaData: { totalPages: totalPages } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json("Internal server error: error " + error.message);
+  }
+});
+
 export default router;
