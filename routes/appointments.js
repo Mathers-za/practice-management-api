@@ -1,7 +1,6 @@
-import express, { query } from "express";
+import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validate } from "uuid";
 
 const router = express.Router();
 
@@ -179,7 +178,6 @@ router.get("/filter:id", async (req, res) => {
   const properties = Object.keys(data);
   const values = Object.values(data);
   const dynamicFilter = [];
-  console.log(data);
 
   properties.forEach((property, index) => {
     if (property === "start_date") {
@@ -193,8 +191,6 @@ router.get("/filter:id", async (req, res) => {
 
   dynamicFilter.push(`user_profile.id = $${dynamicFilter.length + 1}`);
   values.push(profileId);
-  console.log("the query string " + dynamicFilter);
-  console.log("the values that go with the string " + values);
 
   const joinedDynamicFilter = dynamicFilter.join(" AND ");
 
@@ -299,18 +295,16 @@ router.get(`/searchByFilter:id`, async (req, res) => {
 });
 
 router.get(`/appointmentsPagination:id`, async (req, res) => {
-  if (!req.params.id) {
+  if (!req.params.id || !req.query.page || !req.query.pageSize) {
     res.status(400).json("No profile id provided");
     return;
   }
   const profileId = req.params.id;
-  const { pageNumber, pageSize, filterParams } = req.query;
-  const { start_date, end_date, search } = filterParams;
+  const limit = parseInt(req.query.pageSize);
+  const offset = (parseInt(req.query.page) - 1) * limit;
+
+  const { start_date, end_date, search } = req.query;
   const values = [profileId, start_date, end_date];
-  if (!start_date || !end_date || !pageSize || !pageNumber) {
-    res.status(400).json("Have not provdied all the nesccasry parameters");
-    return;
-  }
 
   let lowerCaseSearch = "";
 
@@ -318,8 +312,6 @@ router.get(`/appointmentsPagination:id`, async (req, res) => {
     lowerCaseSearch = search.toLocaleLowerCase();
   }
 
-  const offset = (parseInt(pageNumber) - 1) * parseInt(pageSize);
-  const limit = parseInt(pageSize);
   let queryString = `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
   PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
   APPOINTMENT_DATE,
@@ -352,11 +344,11 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
 
   if (lowerCaseSearch) {
     queryString +=
-      "and (lower(patients.first_name)  like $4||'%' or lower(patients.last_name) like $4||'%') limit $5 offset $6";
-    values.push(lowerCaseSearch, limit, offset);
+      "and (lower(patients.first_name)  like $4||'%' or lower(patients.last_name) like $4||'%')  offset $5 limit $6";
+    values.push(lowerCaseSearch, offset, limit);
   } else {
-    queryString += "limit $4 offset $5";
-    values.push(limit, offset);
+    queryString += " offset $4 limit $5 ";
+    values.push(offset, limit);
   }
 
   let totalCount = "";
@@ -374,23 +366,15 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
     }
 
     const totalPages = Math.max(
-      Math.floor(parseInt(totalCount.rows[0].count) / parseInt(pageSize)),
+      Math.ceil(parseInt(totalCount.rows[0].count) / limit),
       1
     );
-    console.log(totalPages);
 
     const dataChunk = await pool.query(queryString, values);
 
-    if (dataChunk.rowCount > 0) {
-      res.status(200).json({
-        metaData: {
-          totalPages: totalPages,
-        },
-        dataChunk: dataChunk.rows,
-      });
-    } else {
-      res.status(200).json({ totalPages: totalPages, dataChunk: [] });
-    }
+    res
+      .status(200)
+      .json({ data: dataChunk.rows, metaData: { totalPages: totalPages } });
   } catch (error) {
     console.error(error);
     res.status(500).json(error.message);
@@ -405,8 +389,9 @@ router.get(`/viewAppointmentsByPatient:id`, async (req, res) => {
     return;
   }
   const patientId = req.params.id;
-  const offset = (parseInt(req.query.page) - 1) * req.query.pageSize;
   const limit = parseInt(req.query.pageSize);
+  const offset = (parseInt(req.query.page) - 1) * limit;
+
   const query = `SELECT PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
   PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
   APPOINTMENT_DATE,
@@ -445,7 +430,6 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where pat
       Math.ceil(parseInt(rowCount.rows[0].count) / limit),
       1
     );
-    console.log(rowCount.rows[0]);
 
     const result = await pool.query(query, [patientId, offset, limit]);
 
