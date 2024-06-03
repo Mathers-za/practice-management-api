@@ -388,6 +388,7 @@ router.get(`/viewAppointmentsByPatient:id`, async (req, res) => {
       .json({ message: "Not all paprmetrs orquery paramsters are provided" });
     return;
   }
+  console.log(req.params.id);
   const patientId = req.params.id;
   const limit = parseInt(req.query.pageSize);
   const offset = (parseInt(req.query.page) - 1) * limit;
@@ -409,29 +410,33 @@ router.get(`/viewAppointmentsByPatient:id`, async (req, res) => {
   invoice_title,
   USER_PROFILE.ID AS PROFILE_ID,
   APPOINTMENTS.ID AS APPOINTMENT_ID,
-  PATIENTS.ID AS PATIENT_ID,
+  PATIENTS.ID AS PATIENT_ID, 
   FINANCIALS.AMOUNT_DUE,
   FINANCIALS.TOTAL_AMOUNT,
   FINANCIALS.AMOUNT_PAID
 FROM APPOINTMENTS
-JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+left JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
 JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
 LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
 JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
-JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patients.id = $1 offset $2 limit $3`;
+JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patient_id = $1 
+order by appointments.id desc
+offset $2 limit $3`;
 
   try {
-    const rowCount = await pool.query(
+    const totalRowsCounted = await pool.query(
       `select count(*) from appointments where patient_id = $1`,
       [patientId]
     );
+
     const totalPages = Math.max(
-      Math.ceil(parseInt(rowCount.rows[0].count) / limit),
+      Math.ceil(parseFloat(totalRowsCounted.rows[0].count) / limit),
       1
     );
 
     const result = await pool.query(query, [patientId, offset, limit]);
+    console.log(result.rowCount);
 
     res
       .status(200)
