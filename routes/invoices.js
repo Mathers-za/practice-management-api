@@ -18,20 +18,24 @@ router.post("/create:id", async (req, res) => {
   const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
   const appointmentId = req.params.id;
 
-  const { invoice_title, invoice_start_date, invoice_end_date, paid } =
-    req.body;
+  const {
+    invoice_title,
+    invoice_start_date,
+    invoice_end_date,
+    invoice_status,
+  } = req.body;
 
   try {
     const result = await pool.query(
       `INSERT INTO invoices(invoice_number,invoice_title,invoice_start_date,invoice_end_date,
-       appointment_id,paid)values($1,$2,$3,$4,$5,$6) returning * `,
+       appointment_id,invoice_status)values($1,$2,$3,$4,$5,$6) returning * `,
       [
         invoiceNumber,
         invoice_title,
         invoice_start_date,
         invoice_end_date,
         appointmentId,
-        paid,
+        invoice_status,
       ]
     );
     if (result.rowCount > 0) {
