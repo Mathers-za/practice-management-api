@@ -134,7 +134,7 @@ router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
       1
     );
     const appointmentTypeData = await pool.query(
-      "SELECT * FROM appointment_type WHERE profile_id= $1 offset $2 limit $3",
+      "SELECT * FROM appointment_type WHERE profile_id= $1 order by appointment_type.id desc offset $2 limit $3",
       [profileId, offset, limit]
     );
     if (appointmentTypeData.rowCount > 0) {

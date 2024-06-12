@@ -47,8 +47,7 @@ router.post("/create:id", async (req, res) => {
 });
 
 router.patch("/update:id", async (req, res) => {
-  const patientId = req.params.id;
-  await updateRecords(req, res, "additional_patient_information", "id");
+  await updateRecords(req, res, "additional_patient_information", "patient_id");
 });
 
 export default router;
