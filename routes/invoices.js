@@ -71,8 +71,11 @@ router.patch("/update:id", async (req, res) => {
   await updateRecords(req, res, "invoices", "appointment_id");
 });
 
-router.delete("/deleteInvoice:id", async (req, res) => {
+router.delete("/delete:id", async (req, res) => {
   const id = req.params.id;
+  if (!id) {
+    res.status(400).json;
+  }
 
   try {
     const result = await pool.query("DELETE FROM INVOICES WHERE id = $1", [id]);

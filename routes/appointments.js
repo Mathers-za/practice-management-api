@@ -40,40 +40,6 @@ router.post("/createAppointment", async (req, res) => {
   }
 });
 
-router.get("/ptAppointments:id", async (req, res) => {
-  //retrives all appointments and appointmnt related data for specific patient
-  const patient_id = req.params.id;
-
-  try {
-    const result = await pool.query(
-      `SELECT * from appointments as apps 
-      inner join appointment_type as apptype 
-      on apps.appointment_type_id = apptype.id
-	  inner join patients on apps.patient_id = patients.id 
-inner join user_profile on patients.profile_id = user_profile.id
-      where patient_id = $1`,
-      [patient_id]
-    );
-
-    if (result.rowCount > 1) {
-      res.status(200).json({
-        success: true,
-        message: "succeessfully retrieved the patients appointments",
-        data: result.rows,
-      });
-    } else {
-      res.status(200).json({ message: " No data" });
-    }
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "internal server error",
-      error: error.message,
-    });
-  }
-});
-
 router.get("/viewByDate", async (req, res) => {
   //retrives all users appointments based on a date filtering
   const { startDate, endDate, profile_id } = req.query;
@@ -85,7 +51,7 @@ router.get("/viewByDate", async (req, res) => {
       on apps.appointment_type_id = apptype.id
 	  inner join patients on apps.patient_id = patients.id 
 inner join user_profile on patients.profile_id = user_profile.id
-      where profile_id= $1
+      where profile_id= $1 and appointments.soft_delete = false 
     AND appointment_date >= $2 
     AND appointment_date <= $3
     `,
@@ -144,34 +110,6 @@ router.patch("/updateAppointment:id", async (req, res) => {
   await updateRecords(req, res, "appointments", "id");
 });
 
-router.delete("/deleteAppointment:id", async (req, res) => {
-  //deletes appointments based on id
-  const appointment_id = req.params.id;
-
-  try {
-    const result = await pool.query("DELETE FROM appointments where id = $1", [
-      appointment_id,
-    ]);
-
-    if (result.rowCount > 0) {
-      res
-        .status(204)
-        .json({ success: true, message: "successfully deleted appointment" });
-    } else {
-      res
-        .status(404)
-        .json({ success: false, message: "appointment not found" });
-    }
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "failed to delete appointment",
-      error: error.message,
-    });
-  }
-});
-
 router.get("/filter:id", async (req, res) => {
   const data = req.query;
   const profileId = req.params.id;
@@ -220,7 +158,7 @@ LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
 JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
 JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID 
-  WHERE ${joinedDynamicFilter}`;
+  WHERE ${joinedDynamicFilter} and appointments.soft_delete = false `;
 
   try {
     const result = await pool.query(queryString, values);
@@ -274,7 +212,7 @@ router.get(`/searchByFilter:id`, async (req, res) => {
   JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
   JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
   JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
-  where appointment_date >= $1 and appointment_date <= $2 ${
+  where appointment_date >= $1 and appointments.soft_delete = false and appointment_date <= $2 ${
     searchSubString
       ? " and (lower(patients.first_name )like  $3||'%' or lower(patients.last_name) like $3||'%'  or lower(patients.email) like $3||'%'  or lower(patients.contact_number) like $3||'%' )  "
       : ""
@@ -342,7 +280,7 @@ LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
 JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
 JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
- where user_profile.id = $1 and appointment_date >= $2  and appointment_date <= $3 `;
+ where user_profile.id = $1 and appointment_date >= $2  and appointment_date <= $3 and appointments.soft_delete = false `;
 
   if (lowerCaseSearch) {
     queryString +=
@@ -357,12 +295,12 @@ JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
   try {
     if (start_date && end_date && lowerCaseSearch) {
       totalCount = await pool.query(
-        "select count(*) from appointments JOIN patients ON patients.id = appointments.patient_id where profile_id = $1 and appointment_date >= $2 and appointment_date <= $3 and (lower(patients.first_name)  like $4||'%' or lower(patients.last_name) like $4||'%')",
+        "select count(*) from appointments JOIN patients ON patients.id = appointments.patient_id where  profile_id = $1 and appointments.soft_delete = false and appointment_date >= $2 and appointment_date <= $3 and (lower(patients.first_name)  like $4||'%' or lower(patients.last_name) like $4||'%')",
         [profileId, start_date, end_date, lowerCaseSearch]
       );
     } else {
       totalCount = await pool.query(
-        "select count(*) from appointments JOIN patients ON patients.id = appointments.patient_id where profile_id = $1 and appointment_date >= $2 and appointment_date <= $3",
+        "select count(*) from appointments JOIN patients ON patients.id = appointments.patient_id where profile_id = $1 and appointments.soft_delete = false and appointment_date >= $2 and appointment_date <= $3",
         [profileId, start_date, end_date]
       );
     }
@@ -422,13 +360,13 @@ JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
 LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
 JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
-JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patients.id = $1 
+JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patients.id = $1 and appointments.soft_delete = false  
 order by appointments.id desc
 offset $2 limit $3`;
 
   try {
     const rowCount = await pool.query(
-      `select count(*) from appointments where patient_id = $1`,
+      `select count(*) from appointments where patient_id = $1 and appointments.soft_delete = false`,
       [patientId]
     );
     const totalPages = Math.max(
@@ -443,6 +381,27 @@ offset $2 limit $3`;
       .json({ data: result.rows, metaData: { totalPages: totalPages } });
   } catch (error) {
     console.error(error);
+  }
+});
+
+router.delete("/delete:id", async (req, res) => {
+  const appointmentId = req.params.id;
+
+  if (!appointmentId) {
+    res.status(400).json({ message: "appointmentId not supplied" });
+  }
+
+  try {
+    await pool.query(
+      "update appointments set soft_delete = true where id = $1",
+      [appointmentId]
+    );
+    res.status(200).json({ message: "Appointment successfully deleted" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: error.message, message: "Internal server error" });
   }
 });
 

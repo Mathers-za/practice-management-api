@@ -92,4 +92,47 @@ router.patch("/update:id", async (req, res) => {
   await updateRecords(req, res, "patients", "id");
 });
 
+router.delete(`/delete`, async (req, res) => {
+  const { patient_id, deleteCorrespondingAppointments } = req.query;
+
+  if (!patient_id) {
+    return res.status(400).json({ message: "patient_id not supplied" });
+  }
+
+  try {
+    let arrayOfPromises = [];
+
+    if (deleteCorrespondingAppointments) {
+      const appointments = await pool.query(
+        `SELECT id FROM appointments WHERE patient_id = $1`,
+        [patient_id]
+      );
+
+      if (appointments.rowCount > 0) {
+        arrayOfPromises = appointments.rows.map((appointment) => {
+          return pool.query(
+            "UPDATE appointments SET soft_delete = true WHERE id = $1",
+            [appointment.id]
+          );
+        });
+      }
+    }
+
+    await Promise.all(arrayOfPromises);
+
+    await pool.query("update patients set soft_delete = true WHERE id = $1", [
+      patient_id,
+    ]);
+
+    res.status(200).json({
+      message: deleteCorrespondingAppointments
+        ? "Patient and corresponding appointments were successfully deleted"
+        : "Patient successfully deleted",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 export default router;
