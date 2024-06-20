@@ -24,7 +24,7 @@ router.get("/viewAll:id", async (req, res) => {
   const profile_id = req.params.id;
   try {
     const result = await pool.query(
-      "SELECT * FROM appointment_type where profile_id = $1",
+      "SELECT * FROM appointment_type where profile_id = $1 and soft_delete = false",
       [profile_id]
     );
     if (result.rowCount > 0) {
@@ -70,32 +70,24 @@ router.get("/view:id", async (req, res) => {
 });
 
 router.delete("/delete:id", async (req, res) => {
-  const id = req.params.id;
+  const appointmentId = req.params.id;
+
+  if (!appointmentId) {
+    res.status(400).json({ message: "Appointment type id not supplied" });
+    return;
+  }
 
   try {
-    const result = await pool.query(
-      "delete from appointment_type where id = $1 returning * ",
-      [id]
+    await pool.query(
+      "update appointment_type set soft_delete = true where id = $1",
+      [appointmentId]
     );
-
-    if (result.rowCount > 0) {
-      res.status(200).json({
-        success: true,
-        message: "appointment  type successfuy deleted",
-      });
-    } else {
-      res.status(200).json({
-        success: false,
-        message: "failed to delete data due to non-existant id",
-      });
-    }
+    res.status(200).json({ message: "Appointment type successfully deleted" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "internal server error",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 });
 
@@ -126,7 +118,7 @@ router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
 
   try {
     const totalRowCount = await pool.query(
-      "select count(*) from appointment_type where profile_id = $1",
+      "select count(*) from appointment_type where profile_id = $1 and soft_delete = false",
       [profileId]
     );
     const totalPages = Math.max(
@@ -134,7 +126,7 @@ router.get(`/getAppTypesAndThierIcds:id`, async (req, res) => {
       1
     );
     const appointmentTypeData = await pool.query(
-      "SELECT * FROM appointment_type WHERE profile_id= $1 order by appointment_type.id desc offset $2 limit $3",
+      "SELECT * FROM appointment_type WHERE profile_id= $1 and soft_delete = false order by appointment_type.id desc offset $2 limit $3",
       [profileId, offset, limit]
     );
     if (appointmentTypeData.rowCount > 0) {
