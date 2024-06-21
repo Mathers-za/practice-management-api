@@ -51,4 +51,20 @@ router.post(`/checkEmailExistence`, async (req, res) => {
   }
 });
 
+router.post("/logout", function (req, res, next) {
+  try {
+    console.log(req.user.id);
+    req.logout(function (err) {
+      if (err) {
+        return next(err);
+      }
+      console.log(req?.user?.id);
+      res.status(200).json({ message: "Successfully logged out" });
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+});
 export default router;
