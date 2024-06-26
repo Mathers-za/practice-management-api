@@ -28,7 +28,9 @@ router.get(`/viewAll:id`, async (req, res) => {
       1
     );
     const result = await pool.query(
-      `SELECT * FROM treatment_notes where patient_id = $1 offset $2 limit $3`,
+      `SELECT * FROM treatment_notes where patient_id = $1
+       order by id desc
+      offset $2 limit $3`,
       [patient_Id, offset, limit]
     );
     res

@@ -109,11 +109,9 @@ function processDataForHbsCompatibilty(dataObj, columnName) {
     constructedArray.push("</p>");
     constructedArray.unshift("<p>");
     formattedSentence = constructedArray.join(" "); //FIXME not kaing into if block hence not relace \ns with </br> also simply return . just rteurn value straight
-    if (formattedSentence.includes("\n")) {
-      //doesnt make it here even
-      formattedSentence = formattedSentence.replaceAll("\n", "<br>");
-      console.log(formattedSentence);
-    }
+
+    formattedSentence = formattedSentence.replaceAll("\n", "<br>");
+
     return { [columnName]: formattedSentence };
   } else {
     formattedSentence = constructedArray.join(" ");

@@ -29,6 +29,7 @@ router.post(`/sendConfirmationEmail`, async (req, res) => {
         USER_PROFILE.PROFILE_EMAIL AS USER_EMAIL,
         CONFIRMATION_SUBJECT,
         CONFIRMATION_BODY,
+        profession,
         APPOINTMENT_TYPE.APPOINTMENT_NAME AS APPOINTMENT_TYPE_NAME,
         PRACTICE_NAME,
         PRACTICE_ADDRESS,

@@ -18,20 +18,24 @@ router.post("/create:id", async (req, res) => {
   const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
   const appointmentId = req.params.id;
 
-  const { invoice_title, invoice_start_date, invoice_end_date, paid } =
-    req.body;
+  const {
+    invoice_title,
+    invoice_start_date,
+    invoice_end_date,
+    invoice_status,
+  } = req.body;
 
   try {
     const result = await pool.query(
       `INSERT INTO invoices(invoice_number,invoice_title,invoice_start_date,invoice_end_date,
-       appointment_id,paid)values($1,$2,$3,$4,$5,$6) returning * `,
+       appointment_id,invoice_status)values($1,$2,$3,$4,$5,$6) returning * `,
       [
         invoiceNumber,
         invoice_title,
         invoice_start_date,
         invoice_end_date,
         appointmentId,
-        paid,
+        invoice_status,
       ]
     );
     if (result.rowCount > 0) {
@@ -67,8 +71,11 @@ router.patch("/update:id", async (req, res) => {
   await updateRecords(req, res, "invoices", "appointment_id");
 });
 
-router.delete("/deleteInvoice:id", async (req, res) => {
+router.delete("/delete:id", async (req, res) => {
   const id = req.params.id;
+  if (!id) {
+    res.status(400).json;
+  }
 
   try {
     const result = await pool.query("DELETE FROM INVOICES WHERE id = $1", [id]);
@@ -164,7 +171,9 @@ router.get(`/filteredView`, async (req, res) => {
     PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
     PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
     PATIENTS.ID AS PATIENT_ID,
-    patients.profile_id as profile_id
+    patients.profile_id as profile_id,
+    email
+    
     
 
   FROM INVOICES
@@ -270,6 +279,7 @@ router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
   try {
     const totalRowCount = await pool.query(
       `select count (*)  FROM INVOICES
+
   JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
   JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
   where appointments.patient_id= $1`,
@@ -282,6 +292,7 @@ router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
 
     const result = await pool.query(
       `SELECT INVOICE_NUMBER,
+<<<<<<< HEAD
       INVOICE_START_DATE,
       INVOICE_END_DATE,
       INVOICES.ID AS INVOICE_ID,
@@ -305,6 +316,31 @@ router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
     where appointments.patient_id = $1
     order by invoices.id desc
     offset $2 limit $3`,
+=======
+    INVOICE_START_DATE,
+    INVOICE_END_DATE,
+    INVOICES.ID AS INVOICE_ID,
+    INVOICE_TITLE,
+    INVOICE_STATUS,
+    TOTAL_AMOUNT,
+    AMOUNT_DUE,
+    AMOUNT_PAID,
+    APPOINTMENT_TYPE_ID,
+    APPOINTMENTS.ID AS APPOINTMENT_ID,
+    PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+    PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+    PATIENTS.ID AS PATIENT_ID,
+    patients.profile_id as profile_id,
+    email
+    
+    
+
+  FROM INVOICES
+  JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
+  JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
+  JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID 
+    where appointments.patient_id = $1 offset $2 limit $3`,
+>>>>>>> develop
       [patientId, offset, limit]
     );
 
