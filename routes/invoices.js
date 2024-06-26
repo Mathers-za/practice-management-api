@@ -292,7 +292,6 @@ router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
 
     const result = await pool.query(
       `SELECT INVOICE_NUMBER,
-<<<<<<< HEAD
       INVOICE_START_DATE,
       INVOICE_END_DATE,
       INVOICES.ID AS INVOICE_ID,
@@ -316,31 +315,6 @@ router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
     where appointments.patient_id = $1
     order by invoices.id desc
     offset $2 limit $3`,
-=======
-    INVOICE_START_DATE,
-    INVOICE_END_DATE,
-    INVOICES.ID AS INVOICE_ID,
-    INVOICE_TITLE,
-    INVOICE_STATUS,
-    TOTAL_AMOUNT,
-    AMOUNT_DUE,
-    AMOUNT_PAID,
-    APPOINTMENT_TYPE_ID,
-    APPOINTMENTS.ID AS APPOINTMENT_ID,
-    PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
-    PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
-    PATIENTS.ID AS PATIENT_ID,
-    patients.profile_id as profile_id,
-    email
-    
-    
-
-  FROM INVOICES
-  JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
-  JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
-  JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID 
-    where appointments.patient_id = $1 offset $2 limit $3`,
->>>>>>> develop
       [patientId, offset, limit]
     );
 

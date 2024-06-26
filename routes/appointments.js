@@ -361,22 +361,13 @@ JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.ID = APPOINTMENTS.APPOINTMENT_TYPE_ID
 LEFT JOIN INVOICES ON INVOICES.APPOINTMENT_ID = APPOINTMENTS.ID
 JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID
 JOIN USER_PROFILE ON USER_PROFILE.ID = PATIENTS.PROFILE_ID
-<<<<<<< HEAD
-JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patient_id = $1 
-=======
 JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID where patients.id = $1 and appointments.soft_delete = false  
->>>>>>> develop
 order by appointments.id desc
 offset $2 limit $3`;
 
   try {
-<<<<<<< HEAD
-    const totalRowsCounted = await pool.query(
-      `select count(*) from appointments where patient_id = $1`,
-=======
     const rowCount = await pool.query(
       `select count(*) from appointments where patient_id = $1 and appointments.soft_delete = false`,
->>>>>>> develop
       [patientId]
     );
 
