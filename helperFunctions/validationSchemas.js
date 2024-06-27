@@ -316,3 +316,47 @@ export const icdCodeValidationSchema = object({
       }
     }),
 });
+
+export const medicalAidValidation = object({
+  medaid_name: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  medaid_scheme: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  medaid_number: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  mainmem_name: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  mainmem_surnam: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  mainmem_gov_id: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  gov_id: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  is_dependant: boolean().transform((value) =>
+    value === undefined || value === null ? false : value
+  ),
+});
+
+export const updatePatientValidationSchema = object({
+  first_name: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Patient first name is required"),
+  last_name: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  email: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .email("Invalid Email")
+    .nullable(),
+  contact_number: string("invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .matches(/^0[1-9]{1}[0-9]{8}$/, "Invalid phone number")
+    .nullable(),
+});

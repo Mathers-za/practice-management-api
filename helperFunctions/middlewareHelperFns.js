@@ -1,4 +1,4 @@
-export function applyValidationFn(validationSchemaCb) {
+export function validationMiddleWare(validationSchemaCb) {
   return async function validateMiddleware(req, res, next) {
     try {
       await validationSchemaCb.validate(req.body);

@@ -1,7 +1,7 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { applyValidationFn } from "../helperFunctions/middlewareHelperFns.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import { profileValidationSchema } from "../helperFunctions/validationSchemas.js";
 const router = express.Router(); //no delete route- need to fighure out how to cascade delete while arching poetnetially important info
 
@@ -45,9 +45,15 @@ router.post(
 
 router.patch(
   "/update:id",
-  applyValidationFn(profileValidationSchema),
+  validationMiddleWare(profileValidationSchema),
   async (req, res) => {
-    await updateRecords(req, res, "user_profile", "id");
+    await updateRecords(
+      req,
+      res,
+      "user_profile",
+      "id",
+      profileValidationSchema
+    );
   }
 );
 

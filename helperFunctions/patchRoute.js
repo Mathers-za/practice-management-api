@@ -1,8 +1,16 @@
 import pool from "../config/dbconfig.js";
 
-async function updateRecords(req, res, tableName, idColumnName) {
+async function updateRecords(
+  req,
+  res,
+  tableName,
+  idColumnName,
+  validationSchema = undefined
+) {
   try {
-    const updates = req.body;
+    const updates = validationSchema
+      ? await validationSchema.cast(req.body)
+      : req.body;
 
     const id = req.params.id;
 
