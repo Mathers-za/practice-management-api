@@ -370,3 +370,27 @@ export const updatePatientValidationSchema = object({
     .matches(/^0[1-9]{1}[0-9]{8}$/, "Invalid phone number")
     .nullable(),
 });
+
+export const createInvoiceValidationSchema = object({
+  invoice_start_date: date().required("The starting invoice date is required"),
+  invoice_end_date: date().required("The end invoice date is required"),
+  invoice_title: string()
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  invoice_status: string().required("invoice status is required"),
+});
+
+export const updateInvoiceValidationSchema = object({
+  invoice_start_date: date("Invalid date")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Invoice start date is required"),
+  invoice_end_date: date("Invalid date")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Invoice end date is required"),
+  invoice_title: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  invoice_status: string()
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("InvoiceStatus is required"),
+});

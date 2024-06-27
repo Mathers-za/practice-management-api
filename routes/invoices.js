@@ -11,41 +11,50 @@ import {
   extractDataFromDB,
   convertToPdfAndStore,
 } from "../helperFunctions/pdfConversion.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  createInvoiceValidationSchema,
+  updateInvoiceValidationSchema,
+} from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
-router.post("/create:id", async (req, res) => {
-  const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
-  const appointmentId = req.params.id;
+router.post(
+  "/create:id",
+  validationMiddleWare(createInvoiceValidationSchema),
+  async (req, res) => {
+    const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
+    const appointmentId = req.params.id;
+    const cleanedData = createInvoiceValidationSchema.cast(req.body);
+    const {
+      invoice_title,
+      invoice_start_date,
+      invoice_end_date,
+      invoice_status,
+    } = cleanedData;
 
-  const {
-    invoice_title,
-    invoice_start_date,
-    invoice_end_date,
-    invoice_status,
-  } = req.body;
-
-  try {
-    const result = await pool.query(
-      `INSERT INTO invoices(invoice_number,invoice_title,invoice_start_date,invoice_end_date,
+    try {
+      const result = await pool.query(
+        `INSERT INTO invoices(invoice_number,invoice_title,invoice_start_date,invoice_end_date,
        appointment_id,invoice_status)values($1,$2,$3,$4,$5,$6) returning * `,
-      [
-        invoiceNumber,
-        invoice_title,
-        invoice_start_date,
-        invoice_end_date,
-        appointmentId,
-        invoice_status,
-      ]
-    );
-    if (result.rowCount > 0) {
-      res.status(201).json(result.rows[0]);
+        [
+          invoiceNumber,
+          invoice_title,
+          invoice_start_date,
+          invoice_end_date,
+          appointmentId,
+          invoice_status,
+        ]
+      );
+      if (result.rowCount > 0) {
+        res.status(201).json(result.rows[0]);
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
 router.get(`/view:id`, async (req, res) => {
   const appointmentId = req.params.id;
@@ -67,9 +76,19 @@ router.get(`/view:id`, async (req, res) => {
   }
 });
 
-router.patch("/update:id", async (req, res) => {
-  await updateRecords(req, res, "invoices", "appointment_id");
-});
+router.patch(
+  "/update:id",
+  validationMiddleWare(updateInvoiceValidationSchema),
+  async (req, res) => {
+    await updateRecords(
+      req,
+      res,
+      "invoices",
+      "appointment_id",
+      updateInvoiceValidationSchema
+    );
+  }
+);
 
 router.delete("/delete:id", async (req, res) => {
   const id = req.params.id;

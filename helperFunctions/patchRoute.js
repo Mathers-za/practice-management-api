@@ -1,3 +1,4 @@
+import { assert } from "puppeteer";
 import pool from "../config/dbconfig.js";
 
 async function updateRecords(
@@ -9,7 +10,7 @@ async function updateRecords(
 ) {
   try {
     const updates = validationSchema
-      ? await validationSchema.cast(req.body)
+      ? await validationSchema.cast(req.body, { assert: false })
       : req.body;
 
     const id = req.params.id;
