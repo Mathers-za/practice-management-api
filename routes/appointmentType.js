@@ -13,7 +13,8 @@ router.post(
   "/create:id",
   validationMiddleWare(createAppointmentTypeValidationSchema),
   async (req, res) => {
-    const { appointment_name, duration, price } = req.body;
+    const cleanedData = createAppointmentTypeValidationSchema.cast(req.body);
+    const { appointment_name, duration, price } = cleanedData;
     const profile_id = req.params.id;
 
     try {

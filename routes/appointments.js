@@ -1,44 +1,51 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { createAppointmentValidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
-router.post("/createAppointment", async (req, res) => {
-  const {
-    appointment_date,
-    start_time,
-    end_time,
-    appointment_type_id,
-    patient_id,
-    sent_confirmation,
-    send_reminder,
-  } = req.body;
+router.post(
+  "/createAppointment",
+  validationMiddleWare(createAppointmentValidationSchema),
+  async (req, res) => {
+    const cleanedData = createAppointmentValidationSchema.cast(req.body);
+    const {
+      appointment_date,
+      start_time,
+      end_time,
+      appointment_type_id,
+      patient_id,
+      sent_confirmation,
+      send_reminder,
+    } = cleanedData;
 
-  try {
-    const result = await pool.query(
-      "INSERT INTO appointments(appointment_date,start_time,end_time,appointment_type_id,patient_id, send_reminder, sent_confirmation)values($1,$2,$3,$4,$5,$6,$7) returning *",
-      [
-        appointment_date,
-        start_time,
-        end_time,
-        appointment_type_id,
-        patient_id,
-        send_reminder,
-        sent_confirmation,
-      ]
-    );
+    try {
+      const result = await pool.query(
+        "INSERT INTO appointments(appointment_date,start_time,end_time,appointment_type_id,patient_id, send_reminder, sent_confirmation)values($1,$2,$3,$4,$5,$6,$7) returning *",
+        [
+          appointment_date,
+          start_time,
+          end_time,
+          appointment_type_id,
+          patient_id,
+          send_reminder,
+          sent_confirmation,
+        ]
+      );
 
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "internal server error",
-      error: error.message,
-    });
+      res.status(201).json(result.rows[0]);
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).json({
+        success: false,
+        message: "internal server error",
+        error: error.message,
+      });
+    }
   }
-});
+);
 
 router.get("/viewByDate", async (req, res) => {
   //retrives all users appointments based on a date filtering
@@ -76,6 +83,7 @@ inner join user_profile on patients.profile_id = user_profile.id
     });
   }
 });
+//TODO may need to add validation to filters. check with matt to see if its needed
 
 router.get("/viewSpecific:id", async (req, res) => {
   //retreves specific appointment based on appoientmnt id
@@ -103,11 +111,6 @@ router.get("/viewSpecific:id", async (req, res) => {
       error: error.message,
     });
   }
-});
-
-router.patch("/updateAppointment:id", async (req, res) => {
-  //updates appointment info
-  await updateRecords(req, res, "appointments", "id");
 });
 
 router.get("/filter:id", async (req, res) => {

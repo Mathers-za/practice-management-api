@@ -113,11 +113,21 @@ export const profileValidationSchema = object({
 });
 
 export const practiceDetailsValidationSchema = object({
-  practice_name: string("Invalid format").nullable(),
-  practice_num: string("Invalid format").nullable(),
-  practice_address: string("Invalid format").nullable(),
-  billing_adress: string("Invalid format").nullable(),
-  bank_details: string("Invalid format").nullable(),
+  practice_name: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  practice_num: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  practice_address: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  billing_adress: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  bank_details: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
 });
 
 export const createAppointmentValidationSchema = object({
