@@ -35,18 +35,6 @@ router.post(
         ]
       );
 
-<<<<<<< HEAD
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "internal server error",
-      error: error.message,
-    });
-  }
-});
-=======
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error(error.message);
@@ -58,7 +46,6 @@ router.post(
     }
   }
 );
->>>>>>> develop
 
 router.get("/viewByDate", async (req, res) => {
   //retrives all users appointments based on a date filtering
@@ -126,14 +113,6 @@ router.get("/viewSpecific:id", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-router.patch("/updateAppointment:id", async (req, res) => {
-  //updates appointment info
-  await updateRecords(req, res, "appointments", "id");
-});
-
-=======
->>>>>>> develop
 router.get("/filter:id", async (req, res) => {
   const data = req.query;
   const profileId = req.params.id;
