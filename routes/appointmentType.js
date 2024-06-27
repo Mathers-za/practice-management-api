@@ -1,25 +1,34 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import {
+  createAppointmentTypeValidationSchema,
+  updateAppointmentTypeValidatiionSchema,
+} from "../helperFunctions/validationSchemas.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 
 const router = express.Router();
 
-router.post("/create:id", async (req, res) => {
-  const { appointment_name, duration, price } = req.body;
-  const profile_id = req.params.id;
+router.post(
+  "/create:id",
+  validationMiddleWare(createAppointmentTypeValidationSchema),
+  async (req, res) => {
+    const cleanedData = createAppointmentTypeValidationSchema.cast(req.body);
+    const { appointment_name, duration, price } = cleanedData;
+    const profile_id = req.params.id;
 
-  try {
-    const result = await pool.query(
-      "INSERT INTO appointment_type(appointment_name,duration,price,profile_id)values($1,$2,$3,$4) returning * ",
-      [appointment_name, duration, price, profile_id]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
+    try {
+      const result = await pool.query(
+        "INSERT INTO appointment_type(appointment_name, duration, price, profile_id) VALUES ($1, $2, $3, $4) RETURNING *",
+        [appointment_name, duration, price, profile_id]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
-
+);
 router.get("/viewAll:id", async (req, res) => {
   const profile_id = req.params.id;
   try {
@@ -42,9 +51,19 @@ router.get("/viewAll:id", async (req, res) => {
   }
 });
 
-router.patch("/update:id", async (req, res) => {
-  await updateRecords(req, res, "appointment_type", "id");
-});
+router.patch(
+  "/update:id",
+  validationMiddleWare(updateAppointmentTypeValidatiionSchema),
+  async (req, res) => {
+    await updateRecords(
+      req,
+      res,
+      "appointment_type",
+      "id",
+      updateAppointmentTypeValidatiionSchema
+    );
+  }
+);
 
 router.get("/view:id", async (req, res) => {
   const id = req.params.id;
