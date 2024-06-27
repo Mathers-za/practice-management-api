@@ -20,6 +20,7 @@ import paymentRoute from "./routes/payments.js";
 import financialsRoute from "./routes/financials.js";
 import emailNotificationsRoute from "./routes/customEmails.js";
 import patientAdditionalInformationRoute from "./routes/patientAdditionalInformation.js";
+import { ValidationError } from "yup";
 //import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job- disbaled in development
 
 const app = express();
@@ -68,6 +69,15 @@ app.use("/treatmentNotes", treatmentNotesRoute);
 app.use("/financials", financialsRoute);
 app.use("/payments", paymentRoute);
 app.use("/patientAdditionalInformation", patientAdditionalInformationRoute);
+app.use((error, req, res, next) => {
+  if (error instanceof ValidationError) {
+    res.status(400).json({
+      message: "an error occured",
+      errorType: error.name,
+      errorMessage: error.message,
+    });
+  }
+});
 
 app.listen(port, () => {
   console.log(`server running on port ${port}`);

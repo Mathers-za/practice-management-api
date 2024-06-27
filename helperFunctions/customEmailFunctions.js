@@ -108,7 +108,7 @@ function processDataForHbsCompatibilty(dataObj, columnName) {
   if (columnName === "reminder_body" || columnName === "confirmation_body") {
     constructedArray.push("</p>");
     constructedArray.unshift("<p>");
-    formattedSentence = constructedArray.join(" "); //FIXME not kaing into if block hence not relace \ns with </br> also simply return . just rteurn value straight
+    formattedSentence = constructedArray.join(" ");
 
     formattedSentence = formattedSentence.replaceAll("\n", "<br>");
 
