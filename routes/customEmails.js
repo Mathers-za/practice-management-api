@@ -9,6 +9,8 @@ import {
 } from "../helperFunctions/customEmailFunctions.js";
 
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { updateAppointmentNotificationsEmailsValidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
@@ -132,9 +134,13 @@ router.get(`/view:id`, async (req, res) => {
   }
 });
 
-router.patch(`/update:id`, async (req, res) => {
-  await updateRecords(req, res, "email_customizations", "id");
-});
+router.patch(
+  `/update:id`,
+  validationMiddleWare(updateAppointmentNotificationsEmailsValidationSchema),
+  async (req, res) => {
+    await updateRecords(req, res, "email_customizations", "id");
+  }
+);
 
 router.post(`/customizationErrorCheck`, async (req, res) => {
   const data = req.body;

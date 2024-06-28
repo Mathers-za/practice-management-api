@@ -306,7 +306,7 @@ export const invoicePageFinancialsValidation = object({
     ),
 });
 
-export const predefinedIcdCodeValidationSchema = object({
+export const icdCodevalidationSchema = object({
   icd10_code: string("invalid format").transform((value) =>
     value === undefined ? null : value
   ),
@@ -396,4 +396,56 @@ export const updateInvoiceValidationSchema = object({
   invoice_status: string()
     .transform((value) => (value === "" ? null : value))
     .nonNullable("InvoiceStatus is required"),
+});
+
+export const updateAppointmentNotificationsEmailsValidationSchema = object({
+  confirmation_subject: string("invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Notification email content cannot be empty"),
+  confirmation_body: string("invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Notification email content cannot be empty"),
+  reminder_subject: string("invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Notification email content cannot be empty"),
+  reminder_body: string("invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Notification email content cannot be empty."),
+});
+
+export const createTreatmentNoteValidationSchema = object({
+  title: string("Invalid type").required("Treatment  note title is required"),
+  subjective: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  objective: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  assessment: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  additional_notes: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  date: date("invalid date").required("Treatment note date is required"),
+});
+export const updateTreatmentNoteValidationSchema = object({
+  title: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Title is required"),
+  subjective: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  objective: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  assessment: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  additional_notes: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  date: date("invalid date")
+    .transform((value) => (value === "" ? null : value))
+    .nonNullable("Treatment note date is required"),
 });

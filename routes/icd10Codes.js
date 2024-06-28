@@ -1,27 +1,33 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { icdCodevalidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
-router.post(`/create:id`, async (req, res) => {
-  const appointmentId = req.params.id;
-  const { icd_10_code, procedural_codes, price } = req.body;
+router.post(
+  `/create:id`,
+  validationMiddleWare(icdCodevalidationSchema),
+  async (req, res) => {
+    const appointmentId = req.params.id;
+    const { icd_10_code, procedural_codes, price } = req.validation;
 
-  try {
-    const result = await pool.query(
-      `INSERT INTO icd_10_codes(icd_10_code,procedural_codes,price,appointment_id)
+    try {
+      const result = await pool.query(
+        `INSERT INTO icd_10_codes(icd_10_code,procedural_codes,price,appointment_id)
         values($1,$2,$3,$4) RETURNING * `,
-      [icd_10_code, procedural_codes, price, appointmentId]
-    );
-    if (result.rowCount > 0) {
-      res.status(201).json(result.rows[0]);
+        [icd_10_code, procedural_codes, price, appointmentId]
+      );
+      if (result.rowCount > 0) {
+        res.status(201).json(result.rows[0]);
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
 router.get(`/view:id`, async (req, res) => {
   //get all icd-10 codes for specific appointment(appointments.id)
@@ -44,9 +50,13 @@ router.get(`/view:id`, async (req, res) => {
   }
 });
 
-router.patch(`/update:id`, async (req, res) => {
-  await updateRecords(req, res, "icd_10_codes", "id");
-});
+router.patch(
+  `/update:id`,
+  validationMiddleWare(icdCodevalidationSchema),
+  async (req, res) => {
+    await updateRecords(req, res, "icd_10_codes", "id");
+  }
+);
 
 router.delete(`/delete:id`, async (req, res) => {
   //deletes specific code where id is specified
