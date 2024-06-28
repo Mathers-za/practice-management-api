@@ -1,7 +1,11 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+  validationRequestQueryMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import {
   createTreatmentNoteValidationSchema,
   updateTreatmentNoteValidationSchema,
@@ -11,6 +15,8 @@ const router = express.Router();
 
 router.get(
   `/viewAll:id`,
+  validationRequestParamsMiddleWare,
+  validationRequestQueryMiddleWare(["page", "pageSize"]),
 
   async (req, res) => {
     if (!req.params.id || !req.query.page || !req.query.pageSize) {
@@ -53,7 +59,7 @@ router.get(
 
 router.post(
   "/create:id",
-  validationMiddleWare(createTreatmentNoteValidationSchema),
+  validationRequestBodyMiddleWare(createTreatmentNoteValidationSchema),
   async (req, res) => {
     const patient_id = req.params.id;
     const {
@@ -96,7 +102,7 @@ router.post(
 
 router.patch(
   "/update:id",
-  validationMiddleWare(updateTreatmentNoteValidationSchema),
+  validationRequestBodyMiddleWare(updateTreatmentNoteValidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "treatment_notes", "id");
   }

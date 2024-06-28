@@ -11,7 +11,7 @@ import {
   extractDataFromDB,
   convertToPdfAndStore,
 } from "../helperFunctions/pdfConversion.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import {
   createInvoiceValidationSchema,
   updateInvoiceValidationSchema,
@@ -21,7 +21,7 @@ const router = express.Router();
 
 router.post(
   "/create:id",
-  validationMiddleWare(createInvoiceValidationSchema),
+  validationRequestBodyMiddleWare(createInvoiceValidationSchema),
   async (req, res) => {
     const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
     const appointmentId = req.params.id;
@@ -78,7 +78,7 @@ router.get(`/view:id`, async (req, res) => {
 
 router.patch(
   "/update:id",
-  validationMiddleWare(updateInvoiceValidationSchema),
+  validationRequestBodyMiddleWare(updateInvoiceValidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "invoices", "appointment_id");
   }

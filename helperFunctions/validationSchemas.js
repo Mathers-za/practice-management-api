@@ -8,11 +8,7 @@ import {
   ref,
   string,
 } from "yup";
-
-addMethod(Schema, "stripEmptyString", function () {
-  return this.transform((value) => (value === "" ? undefined : value));
-});
-
+import defaultData from "./defaultData.js";
 export const loginFormSchema = object({
   email: string("Invalid format")
     .email("Invalid Email")
@@ -448,4 +444,39 @@ export const updateTreatmentNoteValidationSchema = object({
   date: date("invalid date")
     .transform((value) => (value === "" ? null : value))
     .nonNullable("Treatment note date is required"),
+  title: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable().oneOf[
+    (defaultData.defaultTitles, "Title does not exist in permitted titles")
+  ],
+});
+
+export const patientAdditonalInformationValidationSchema = object({
+  date_of_birth: date("invalid date")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  bio: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  billing_address: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  initials: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
+  gender: string("Invalid type")
+    .transform((value) => (value === "" ? null : value))
+    .nullable()
+    .oneOf(
+      ["Male", "Female", "Other"],
+      "Gender does not exist in permitted genders"
+    ),
+
+  title: string("Invalid format")
+    .transform((value) => (value === "" ? null : value))
+    .nullable()
+    .oneOf(
+      defaultData.defaultTitles,
+      "Title does not exist in permitted titles"
+    ),
 });

@@ -1,7 +1,7 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import {
   createPatientValidationSchema,
   updatePatientValidationSchema,
@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
   "/create:id",
-  validationMiddleWare(createPatientValidationSchema),
+  validationRequestBodyMiddleWare(createPatientValidationSchema),
   async (req, res) => {
     //create client endpoint
     const cleanedData = req.validatedData;
@@ -87,7 +87,7 @@ router.get("/viewPatient:id", async (req, res) => {
 
 router.patch(
   "/update:id",
-  validationMiddleWare(updatePatientValidationSchema),
+  validationRequestBodyMiddleWare(updatePatientValidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "patients", "id");
   }

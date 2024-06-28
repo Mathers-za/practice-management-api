@@ -1,7 +1,7 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import { practiceDetailsValidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
@@ -69,7 +69,7 @@ router.post("/create", async (req, res) => {
 
 router.patch(
   "/update:id",
-  validationMiddleWare(practiceDetailsValidationSchema),
+  validationRequestBodyMiddleWare(practiceDetailsValidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "practice_details", "id");
   }

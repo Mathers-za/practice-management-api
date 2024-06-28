@@ -1,6 +1,12 @@
 import express, { query } from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  createPatientValidationSchema,
+  patientAdditonalInformationValidationSchema,
+  updateTreatmentNoteValidationSchema,
+} from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
@@ -46,8 +52,17 @@ router.post("/create:id", async (req, res) => {
   }
 });
 
-router.patch("/update:id", async (req, res) => {
-  await updateRecords(req, res, "additional_patient_information", "patient_id");
-});
+router.patch(
+  "/update:id",
+  validationRequestBodyMiddleWare(patientAdditonalInformationValidationSchema),
+  async (req, res) => {
+    await updateRecords(
+      req,
+      res,
+      "additional_patient_information",
+      "patient_id"
+    );
+  }
+);
 
 export default router;

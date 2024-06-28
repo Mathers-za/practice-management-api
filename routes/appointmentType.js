@@ -5,13 +5,13 @@ import {
   createAppointmentTypeValidationSchema,
   updateAppointmentTypeValidatiionSchema,
 } from "../helperFunctions/validationSchemas.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 
 const router = express.Router();
 
 router.post(
   "/create:id",
-  validationMiddleWare(createAppointmentTypeValidationSchema),
+  validationRequestBodyMiddleWare(createAppointmentTypeValidationSchema),
   async (req, res) => {
     const cleanedData = req.validatedData;
     const { appointment_name, duration, price } = cleanedData;
@@ -53,7 +53,7 @@ router.get("/viewAll:id", async (req, res) => {
 
 router.patch(
   "/update:id",
-  validationMiddleWare(updateAppointmentTypeValidatiionSchema),
+  validationRequestBodyMiddleWare(updateAppointmentTypeValidatiionSchema),
   async (req, res) => {
     await updateRecords(req, res, "appointment_type", "id");
   }

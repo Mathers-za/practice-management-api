@@ -1,14 +1,14 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import { icdCodevalidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
 router.post(
   "/create:id",
-  validationMiddleWare(icdCodevalidationSchema),
+  validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     const appTypeid = req.params.id;
     const { icd10_code, procedural_code, price } = req.body;
@@ -35,7 +35,7 @@ router.post(
 
 router.patch(
   "/update:id",
-  validationMiddleWare(icdCodevalidationSchema),
+  validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     updateRecords(req, res, "predefined_icd10_codes", "id");
   }

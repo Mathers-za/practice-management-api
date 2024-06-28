@@ -9,7 +9,7 @@ import {
 } from "../helperFunctions/customEmailFunctions.js";
 
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import { updateAppointmentNotificationsEmailsValidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
@@ -136,7 +136,9 @@ router.get(`/view:id`, async (req, res) => {
 
 router.patch(
   `/update:id`,
-  validationMiddleWare(updateAppointmentNotificationsEmailsValidationSchema),
+  validationRequestBodyMiddleWare(
+    updateAppointmentNotificationsEmailsValidationSchema
+  ),
   async (req, res) => {
     await updateRecords(req, res, "email_customizations", "id");
   }

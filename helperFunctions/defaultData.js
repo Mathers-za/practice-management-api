@@ -1,4 +1,4 @@
-export const defaultData = {
+const defaultData = {
   profileData: {
     first_name: null,
     last_name: null,
@@ -69,3 +69,5 @@ export const defaultData = {
     "Veterinarian",
   ],
 };
+
+export default defaultData;

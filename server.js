@@ -70,11 +70,12 @@ app.use("/financials", financialsRoute);
 app.use("/payments", paymentRoute);
 app.use("/patientAdditionalInformation", patientAdditionalInformationRoute);
 app.use((error, req, res, next) => {
-  if (error instanceof ValidationError) {
-    res.status(400).json({
+  if (error) {
+    res.status(error.status || 500).json({
       message: "an error occured",
       errorType: error.name,
       errorMessage: error.message,
+      status: error.status,
     });
   }
 });

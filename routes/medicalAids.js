@@ -1,13 +1,13 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import { medicalAidValidation } from "../helperFunctions/validationSchemas.js";
 const router = express.Router();
 
 router.post(
   "/create:id",
-  validationMiddleWare(medicalAidValidation),
+  validationRequestBodyMiddleWare(medicalAidValidation),
   async (req, res) => {
     const patientId = req.params.id;
     const cleanedData = req.validatedData;
@@ -51,7 +51,7 @@ router.post(
 
 router.patch(
   "/update:id",
-  validationMiddleWare(medicalAidValidation),
+  validationRequestBodyMiddleWare(medicalAidValidation),
   async (req, res) => {
     await updateRecords(req, res, "medical_aid", "id");
   }
