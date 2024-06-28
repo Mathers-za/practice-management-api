@@ -1,10 +1,11 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validationRequestParamsMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 
 const router = express.Router();
 
-router.get(`/view:id`, async (req, res) => {
+router.get(`/view:id`, validationRequestParamsMiddleWare, async (req, res) => {
   const appointmentId = req.params.id;
 
   try {
@@ -24,12 +25,12 @@ router.get(`/view:id`, async (req, res) => {
   }
 });
 
-router.patch(`/update:id`, async (req, res) => {
-  //pass appoitnmentId in params since only one unique appointment_id field will exist at any given time in financials since its financial data per appointment which there can only be one off
-  await updateRecords(req, res, "financials", "appointment_id");
-});
-
-//financials creation and most of the updating is taken care of by trigger in the db except for discount. that has to be manually updated;
-//deletion will occur automatically if the appointment that is linked to financials, via the forgein key, is deleted
+router.patch(
+  `/update:id`,
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    await updateRecords(req, res, "financials", "appointment_id");
+  }
+);
 
 export default router;

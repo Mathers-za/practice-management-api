@@ -9,13 +9,25 @@ import {
 } from "../helperFunctions/customEmailFunctions.js";
 
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import { updateAppointmentNotificationsEmailsValidationSchema } from "../helperFunctions/validationSchemas.js";
+import { CustomError } from "../helperFunctions/newClasses.js";
 
 const router = express.Router();
 
 router.post(`/sendConfirmationEmail`, async (req, res) => {
   const { profileId, appointmentId, patientId } = req.body;
+  if (!profileId || !appointmentId || !patientId) {
+    //validation
+    throw new CustomError(
+      "badrequest",
+      "Request body is missing variables",
+      400
+    );
+  }
   let compiledSubject = "";
   let compiledBody = "";
 
@@ -96,6 +108,13 @@ router.post(`/sendConfirmationEmail`, async (req, res) => {
 
 router.post(`/create`, async (req, res) => {
   const { profile_id } = req.body;
+  if (!profile_id) {
+    throw new CustomError(
+      "badRequest",
+      "ProfileId in req body is undefined",
+      400
+    );
+  }
 
   try {
     const result = await pool.query(
@@ -112,7 +131,7 @@ router.post(`/create`, async (req, res) => {
   }
 });
 
-router.get(`/view:id`, async (req, res) => {
+router.get(`/view:id`, validationRequestParamsMiddleWare, async (req, res) => {
   const profileId = req.params.id;
 
   try {
@@ -136,6 +155,7 @@ router.get(`/view:id`, async (req, res) => {
 
 router.patch(
   `/update:id`,
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(
     updateAppointmentNotificationsEmailsValidationSchema
   ),
@@ -146,6 +166,9 @@ router.patch(
 
 router.post(`/customizationErrorCheck`, async (req, res) => {
   const data = req.body;
+  if (!data) {
+    throw new CustomError("badRequest", "data in req body is missing", 400);
+  }
 
   try {
     let sourceObjectToString = "";
@@ -160,8 +183,10 @@ router.post(`/customizationErrorCheck`, async (req, res) => {
         (word.includes("}}") && !word.includes("{{")) ||
         (word.includes("{{") && !word.includes("}}"))
       ) {
-        throw new Error(
-          "Variables must follow the format of {{the_variable ex: user_name etc}} \n in order for your customization to be correct \n Do not use curley braces => { } anywhere in your customization \n other than the variables "
+        throw new CustomError(
+          "badRequest",
+          "Variables must follow the format of {{the_variable ex: user_name etc}} \n in order for your customization to be correct \n Do not use curley braces => { } anywhere in your customization \n other than the variables ",
+          400
         );
       }
     });

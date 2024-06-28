@@ -1,13 +1,17 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import { icdCodevalidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
 router.post(
   `/create:id`,
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     const appointmentId = req.params.id;
@@ -29,7 +33,7 @@ router.post(
   }
 );
 
-router.get(`/view:id`, async (req, res) => {
+router.get(`/view:id`, validationRequestParamsMiddleWare, async (req, res) => {
   //get all icd-10 codes for specific appointment(appointments.id)
   const appointmentId = req.params.id;
 
@@ -52,28 +56,33 @@ router.get(`/view:id`, async (req, res) => {
 
 router.patch(
   `/update:id`,
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "icd_10_codes", "id");
   }
 );
 
-router.delete(`/delete:id`, async (req, res) => {
-  //deletes specific code where id is specified
-  const icd10Id = req.params.id;
+router.delete(
+  `/delete:id`,
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    const icd10Id = req.params.id;
 
-  try {
-    const result = await pool.query(`DELETE FROM icd_10_codes where id = $1 `, [
-      icd10Id,
-    ]);
+    try {
+      const result = await pool.query(
+        `DELETE FROM icd_10_codes where id = $1 `,
+        [icd10Id]
+      );
 
-    if (result.rowCount > 0) {
-      res.status(204).json();
+      if (result.rowCount > 0) {
+        res.status(204).json();
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
 export default router;
