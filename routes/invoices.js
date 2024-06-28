@@ -11,7 +11,11 @@ import {
   extractDataFromDB,
   convertToPdfAndStore,
 } from "../helperFunctions/pdfConversion.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+  validationRequestQueryMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import {
   createInvoiceValidationSchema,
   updateInvoiceValidationSchema,
@@ -21,6 +25,7 @@ const router = express.Router();
 
 router.post(
   "/create:id",
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(createInvoiceValidationSchema),
   async (req, res) => {
     const invoiceNumber = "INV-" + uuidv4().slice(0, 6);
@@ -56,7 +61,7 @@ router.post(
   }
 );
 
-router.get(`/view:id`, async (req, res) => {
+router.get(`/view:id`, validationRequestParamsMiddleWare, async (req, res) => {
   const appointmentId = req.params.id;
 
   try {
@@ -78,55 +83,67 @@ router.get(`/view:id`, async (req, res) => {
 
 router.patch(
   "/update:id",
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(updateInvoiceValidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "invoices", "appointment_id");
   }
 );
 
-router.delete("/delete:id", async (req, res) => {
-  const id = req.params.id;
-  if (!id) {
-    res.status(400).json;
-  }
-
-  try {
-    const result = await pool.query("DELETE FROM INVOICES WHERE id = $1", [id]);
-    if (result.rowCount > 0) {
-      res.status(204).json();
+router.delete(
+  "/delete:id",
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    const id = req.params.id;
+    if (!id) {
+      res.status(400).json;
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
+
+    try {
+      const result = await pool.query("DELETE FROM INVOICES WHERE id = $1", [
+        id,
+      ]);
+      if (result.rowCount > 0) {
+        res.status(204).json();
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
+    }
   }
-});
+);
 
-router.get("/invoiceSetup:id", async (req, res) => {
-  const appointmentId = req.params.id;
+router.get(
+  "/invoiceSetup:id",
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    const appointmentId = req.params.id;
 
-  try {
-    const result = await pool.query(
-      `select * from appointments
+    try {
+      const result = await pool.query(
+        `select * from appointments
   JOIN appointment_type ON appointment_type.id = appointments.appointment_type_id
   JOIN patients ON patients.id = appointments.patient_id
   JOIN user_profile ON user_profile.id = patients.profile_id
   JOIN practice_details ON practice_details.profile_id = user_profile.id 
   where appointments.id = $1`,
-      [appointmentId]
-    );
+        [appointmentId]
+      );
 
-    if (result.rowCount > 0) {
-      res.status(200).json(result.rows[0]);
-    } else {
-      res.status(404).json();
+      if (result.rowCount > 0) {
+        res.status(200).json(result.rows[0]);
+      } else {
+        res.status(404).json();
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
 router.get(`/batchview`, async (req, res) => {
+  //Not acid compliant. add start and rollback
   const arrayOfAppointmenIds = req.query.appIds;
   const objectResponse = {};
   if (!arrayOfAppointmenIds) {
@@ -152,25 +169,32 @@ router.get(`/batchview`, async (req, res) => {
   res.status(200).json(objectResponse);
 });
 
-router.get(`/filteredView`, async (req, res) => {
-  const queryParams = req.query;
-  console.log(`the qyery params in endpoint ` + queryParams);
-  const paramKeys = Object.keys(queryParams);
-  const values = Object.values(queryParams);
-  const conditions = [];
-  paramKeys.forEach((key, index) => {
-    if (key === "invoice_start_date") {
-      conditions.push(`${key} >= $${index + 1}`);
-    } else if (key === "invoice_end_date") {
-      conditions.push(`${key} <= $${index + 1}`);
-    } else {
-      conditions.push(`${key} = $${index + 1}`);
-    }
-  });
+router.get(
+  `/filteredView`,
+  validationRequestQueryMiddleWare([
+    "invoice_start_date",
+    "invoice_end_date",
+    "profile_id",
+  ]),
+  async (req, res) => {
+    const queryParams = req.query;
+    console.log(`the qyery params in endpoint ` + queryParams);
+    const paramKeys = Object.keys(queryParams);
+    const values = Object.values(queryParams);
+    const conditions = [];
+    paramKeys.forEach((key, index) => {
+      if (key === "invoice_start_date") {
+        conditions.push(`${key} >= $${index + 1}`);
+      } else if (key === "invoice_end_date") {
+        conditions.push(`${key} <= $${index + 1}`);
+      } else {
+        conditions.push(`${key} = $${index + 1}`);
+      }
+    });
 
-  try {
-    const result = await pool.query(
-      `SELECT INVOICE_NUMBER,
+    try {
+      const result = await pool.query(
+        `SELECT INVOICE_NUMBER,
     INVOICE_START_DATE,
     INVOICE_END_DATE,
     INVOICES.ID AS INVOICE_ID,
@@ -195,116 +219,132 @@ router.get(`/filteredView`, async (req, res) => {
   JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID where ${conditions.join(
     " AND "
   )}`,
-      [...values]
-    );
-    console.log(`the result in endpoint ` + result);
+        [...values]
+      );
+      console.log(`the result in endpoint ` + result);
 
-    if (result.rowCount > 0) {
-      res.status(200).json(result.rows);
-    } else {
-      res.status(200).json([]);
+      if (result.rowCount > 0) {
+        res.status(200).json(result.rows);
+      } else {
+        res.status(200).json([]);
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
-router.get(`/retrieveInvoiceStatement`, async (req, res) => {
-  const { invoiceNumber, profileId, appointmentId, patientId } = req.query;
+router.get(
+  `/retrieveInvoiceStatement`,
+  validationRequestQueryMiddleWare([
+    "invoiceNumber",
+    "profileId",
+    "appointmentId",
+    "patientId",
+  ]),
+  async (req, res) => {
+    const { invoiceNumber, profileId, appointmentId, patientId } = req.query;
 
-  const data = await extractDataFromDB(profileId, appointmentId, patientId);
-  const htmlTemplatePath = path.join(
-    process.cwd(),
-    "templates",
-    "invoiceStatement.hbs"
-  );
-  const htmlContent = compileHtmlContent(htmlTemplatePath, data);
-  const buffer = await convertToPdfAndStore(htmlContent, invoiceNumber);
-
-  res.contentType("application/json").status(200).send(buffer);
-});
-
-router.post(`/sendInvoiceStatment`, async (req, res) => {
-  const { profileId, appointmentId, patientId, invoiceNumber } = req.body;
-  console.log(
-    `profile id = ${profileId}, appointmentId = ${appointmentId}, patientId = ${patientId}`
-  );
-  try {
     const data = await extractDataFromDB(profileId, appointmentId, patientId);
-    console.log(`data extrcated is ${data?.generalData?.practice_name}`);
-    const pathToPdfTemplate = path.join(
+    const htmlTemplatePath = path.join(
       process.cwd(),
       "templates",
       "invoiceStatement.hbs"
     );
-    const htmlContent = compileHtmlContent(pathToPdfTemplate, data);
-    const pdfBuffer = await convertToPdfAndStore(htmlContent);
+    const htmlContent = compileHtmlContent(htmlTemplatePath, data);
+    const buffer = await convertToPdfAndStore(htmlContent, invoiceNumber);
 
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: "danielmathers97@gmail.com",
-        pass: "qfvi vooe ksmi tcpp",
-      },
-    });
+    res.contentType("application/json").status(200).send(buffer);
+  }
+);
 
-    await transporter.sendMail({
-      from: "danielmathers97@gmail.com",
-      to: data.generalData.patient_email,
-      subject: "Invoice Statment for your chiropractic appointment",
-      text: `Please find your invoice Statement for your appointment with ${
-        data?.generalData?.user_first_name || ""
-      } ${data?.generalData?.user_last_name || ""}`,
+router.post(
+  `/sendInvoiceStatment`,
+  validationRequestQueryMiddleWare([
+    "profileId",
+    "appointmentId",
+    "patientId",
+    "invoiceNumber",
+  ]),
+  async (req, res) => {
+    const { profileId, appointmentId, patientId, invoiceNumber } = req.body;
+    console.log(
+      `profile id = ${profileId}, appointmentId = ${appointmentId}, patientId = ${patientId}`
+    );
+    try {
+      const data = await extractDataFromDB(profileId, appointmentId, patientId);
+      console.log(`data extrcated is ${data?.generalData?.practice_name}`);
+      const pathToPdfTemplate = path.join(
+        process.cwd(),
+        "templates",
+        "invoiceStatement.hbs"
+      );
+      const htmlContent = compileHtmlContent(pathToPdfTemplate, data);
+      const pdfBuffer = await convertToPdfAndStore(htmlContent);
 
-      attachments: [
-        {
-          filename: `${invoiceNumber}-invoiceStatemnt.pdf`,
-          content: pdfBuffer,
-          contentType: "application/pdf",
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: "danielmathers97@gmail.com",
+          pass: "qfvi vooe ksmi tcpp",
         },
-      ],
-    });
+      });
 
-    res.status(200).send("sent email successfully");
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
+      await transporter.sendMail({
+        from: "danielmathers97@gmail.com",
+        to: data.generalData.patient_email,
+        subject: "Invoice Statment for your chiropractic appointment",
+        text: `Please find your invoice Statement for your appointment with ${
+          data?.generalData?.user_first_name || ""
+        } ${data?.generalData?.user_last_name || ""}`,
+
+        attachments: [
+          {
+            filename: `${invoiceNumber}-invoiceStatemnt.pdf`,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ],
+      });
+
+      res.status(200).send("sent email successfully");
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
+    }
   }
-});
+);
 
-router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
-  console.log(req.params.id);
-  if (!req.params.id || !req.query.page || !req.query.pageSize) {
-    res
-      .status(400)
-      .json({ message: "Not all paramters or queries were supplied" });
-    return;
-  }
-  console.log(req.params.id);
-  const patientId = req.params.id;
-  const limit = parseInt(req.query.pageSize);
-  const offset = (parseInt(req.query.page) - 1) * limit;
+router.get(
+  `/getAllInvoicesByPatient:id`,
+  validationRequestParamsMiddleWare,
+  validationRequestQueryMiddleWare(["page", "pageSize"]),
+  async (req, res) => {
+    console.log(req.params.id);
+    const patientId = req.params.id;
+    const limit = parseInt(req.query.pageSize);
+    const offset = (parseInt(req.query.page) - 1) * limit;
 
-  try {
-    const totalRowCount = await pool.query(
-      `select count (*)  FROM INVOICES
+    try {
+      const totalRowCount = await pool.query(
+        `select count (*)  FROM INVOICES
 
   JOIN APPOINTMENTS ON APPOINTMENTS.ID = INVOICES.APPOINTMENT_ID
   JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
   where appointments.patient_id= $1`,
-      [patientId]
-    );
-    const totalPages = Math.max(
-      Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
-      1
-    );
+        [patientId]
+      );
+      const totalPages = Math.max(
+        Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
+        1
+      );
 
-    const result = await pool.query(
-      `SELECT INVOICE_NUMBER,
+      const result = await pool.query(
+        `SELECT INVOICE_NUMBER,
     INVOICE_START_DATE,
     INVOICE_END_DATE,
     INVOICES.ID AS INVOICE_ID,
@@ -328,16 +368,17 @@ router.get(`/getAllInvoicesByPatient:id`, async (req, res) => {
   JOIN FINANCIALS ON FINANCIALS.APPOINTMENT_ID = APPOINTMENTS.ID
   JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID 
     where appointments.patient_id = $1 offset $2 limit $3`,
-      [patientId, offset, limit]
-    );
+        [patientId, offset, limit]
+      );
 
-    res
-      .status(200)
-      .json({ data: result.rows, metaData: { totalPages: totalPages } });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json("Internal server error: error " + error.message);
+      res
+        .status(200)
+        .json({ data: result.rows, metaData: { totalPages: totalPages } });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json("Internal server error: error " + error.message);
+    }
   }
-});
+);
 
 export default router;

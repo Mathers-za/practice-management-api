@@ -57,6 +57,39 @@ export const createAppointmentTypeValidationSchema = object({
     ),
 });
 
+export const registerFormSchema = object({
+  email: string("Invalid type")
+    .email("Invalid email")
+    .required("Email required")
+    .test("email", "Email Address already exists", async (value) => {
+      try {
+        const response = await axiosRequest(
+          "post",
+          "/users/checkEmailExistence",
+          {
+            email: value,
+          }
+        );
+
+        if (response.status === 200) {
+          return true;
+        }
+      } catch (error) {
+        return false;
+      }
+    }),
+  password: string("Invalid format")
+    .matches(/[A-Z]+/, "Password must contain atleast one uppercase letter")
+    .matches(/[a-z]+/, "Password must contain atleast one lowercase letter")
+    .matches(/[^a-zA-Z0-9]+/, "Password must contain atleast one symbol")
+    .min(8, "Password must contain a minimum of 8 characters")
+    .required("Password required"),
+
+  password_confirm: string("Invalid format")
+    .oneOf([ref("password")], "Confirmation password does not match password")
+    .required("Required"),
+});
+
 export const updateAppointmentTypeValidatiionSchema = object({
   appointment_name: string("Invalid format")
     .min(1, "A name for the appointment type is required")

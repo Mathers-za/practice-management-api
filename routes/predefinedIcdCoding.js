@@ -1,17 +1,21 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import { icdCodevalidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
 router.post(
   "/create:id",
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     const appTypeid = req.params.id;
-    const { icd10_code, procedural_code, price } = req.body;
+    const { icd10_code, procedural_code, price } = req.validateData;
 
     try {
       const result = await pool.query(
@@ -35,14 +39,14 @@ router.post(
 
 router.patch(
   "/update:id",
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     updateRecords(req, res, "predefined_icd10_codes", "id");
   }
 );
 
-router.get("/view:id", async (req, res) => {
-  //this get route gets all predfined icd_10 code per appointment type
+router.get("/view:id", validationRequestParamsMiddleWare, async (req, res) => {
   const appointment_type_id = req.params.id;
 
   try {
@@ -66,44 +70,52 @@ router.get("/view:id", async (req, res) => {
   }
 });
 
-router.delete("/delete:id", async (req, res) => {
-  //chnaged
-  const preDfinedIcd10Id = req.params.id;
+router.delete(
+  "/delete:id",
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    const preDfinedIcd10Id = req.params.id;
 
-  try {
-    const result = await pool.query(
-      `DELETE FROM predefined_icd10_codes WHERE id = $1 returning *`,
-      [preDfinedIcd10Id]
-    );
-    if (result.rowCount > 0) {
-      res.status(200).json(result.rows[0]);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-});
-
-router.post(`/batchCreate:id`, async (req, res) => {
-  const arrayOfIcds = req.body;
-  const appTypeid = req.params.id;
-
-  try {
-    const arrayOfPromises = arrayOfIcds.map(async (icdObj) => {
-      await pool.query(
-        "INSERT INTO predefined_icd10_codes(icd10_code,procedural_code,price,appointment_type_id)VALUES($1,$2,$3,$4)",
-        [icdObj.icd10_code, icdObj.procedural_code, icdObj.price, appTypeid]
+    try {
+      const result = await pool.query(
+        `DELETE FROM predefined_icd10_codes WHERE id = $1 returning *`,
+        [preDfinedIcd10Id]
       );
-    });
-
-    const result = await Promise.all(arrayOfPromises);
-    console.log(result);
-    res.status(201).json(result);
-  } catch (error) {
-    console.error(error.message);
+      if (result.rowCount > 0) {
+        res.status(200).json(result.rows[0]);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
-});
+);
+
+router.post(
+  `/batchCreate:id`,
+  validationRequestParamsMiddleWare, //TODO make acid compliant aka add begin and rollback etc
+  async (req, res) => {
+    const arrayOfIcds = req.body;
+    const appTypeid = req.params.id;
+
+    try {
+      const arrayOfPromises = arrayOfIcds.map(async (icdObj) => {
+        await pool.query(
+          "INSERT INTO predefined_icd10_codes(icd10_code,procedural_code,price,appointment_type_id)VALUES($1,$2,$3,$4)",
+          [icdObj.icd10_code, icdObj.procedural_code, icdObj.price, appTypeid]
+        );
+      });
+
+      const result = await Promise.all(arrayOfPromises);
+      console.log(result);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
+);
 
 router.delete("/batchDeletion", async (req, res) => {
+  //TODO make acid compliant (add begin rollback etc)
   const arrayOfIcdsToDelete = req.body;
 
   console.log("made it here");

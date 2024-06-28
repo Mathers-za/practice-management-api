@@ -19,13 +19,6 @@ router.get(
   validationRequestQueryMiddleWare(["page", "pageSize"]),
 
   async (req, res) => {
-    if (!req.params.id || !req.query.page || !req.query.pageSize) {
-      res
-        .status(400)
-        .json({ message: "Not all paramaters and queries were supplied" });
-      return;
-    }
-
     const patient_Id = req.params.id;
     const limit = parseInt(req.query.pageSize);
     const offset = (parseInt(req.query.page) - 1) * limit;
@@ -60,6 +53,7 @@ router.get(
 router.post(
   "/create:id",
   validationRequestBodyMiddleWare(createTreatmentNoteValidationSchema),
+  validationRequestParamsMiddleWare,
   async (req, res) => {
     const patient_id = req.params.id;
     const {
@@ -103,30 +97,35 @@ router.post(
 router.patch(
   "/update:id",
   validationRequestBodyMiddleWare(updateTreatmentNoteValidationSchema),
+  validationRequestParamsMiddleWare,
   async (req, res) => {
     await updateRecords(req, res, "treatment_notes", "id");
   }
 );
 
-router.delete("/delete:id", async (req, res) => {
-  const treatmentNoteId = req.params.id;
+router.delete(
+  "/delete:id",
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    const treatmentNoteId = req.params.id;
 
-  try {
-    const result = await pool.query(
-      "DELETE FROM treatment_notes where id = $1",
-      [treatmentNoteId]
-    );
+    try {
+      const result = await pool.query(
+        "DELETE FROM treatment_notes where id = $1",
+        [treatmentNoteId]
+      );
 
-    if (result.rowCount > 0) {
-      res.status(200).json("Successfully deleted treatment note");
+      if (result.rowCount > 0) {
+        res.status(200).json("Successfully deleted treatment note");
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
-router.get("/view:id", async (req, res) => {
+router.get("/view:id", validationRequestParamsMiddleWare, async (req, res) => {
   const treatmentNoteId = req.params.id;
   try {
     const result = await pool.query(

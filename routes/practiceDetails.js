@@ -1,12 +1,15 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import { practiceDetailsValidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
-router.get("/view:id", async (req, res) => {
+router.get("/view:id", validationRequestParamsMiddleWare, async (req, res) => {
   const profileId = req.params.id;
 
   try {
@@ -69,6 +72,7 @@ router.post("/create", async (req, res) => {
 
 router.patch(
   "/update:id",
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(practiceDetailsValidationSchema),
   async (req, res) => {
     await updateRecords(req, res, "practice_details", "id");

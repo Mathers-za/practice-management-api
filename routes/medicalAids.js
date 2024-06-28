@@ -1,13 +1,17 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  validationRequestBodyMiddleWare,
+  validationRequestParamsMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import { medicalAidValidation } from "../helperFunctions/validationSchemas.js";
 const router = express.Router();
 
 router.post(
   "/create:id",
   validationRequestBodyMiddleWare(medicalAidValidation),
+  validationRequestParamsMiddleWare,
   async (req, res) => {
     const patientId = req.params.id;
     const cleanedData = req.validatedData;
@@ -51,13 +55,14 @@ router.post(
 
 router.patch(
   "/update:id",
+  validationRequestParamsMiddleWare,
   validationRequestBodyMiddleWare(medicalAidValidation),
   async (req, res) => {
     await updateRecords(req, res, "medical_aid", "id");
   }
 );
 
-router.get("/view:id", async (req, res) => {
+router.get("/view:id", validationRequestParamsMiddleWare, async (req, res) => {
   const patient_id = req.params.id;
 
   try {

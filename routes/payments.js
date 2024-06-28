@@ -1,9 +1,14 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
+import { validate } from "uuid";
+import {
+  validationRequestParamsMiddleWare,
+  validationRequestQueryMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 
 const router = express.Router();
 
-router.get(`/view:id`, async (req, res) => {
+router.get(`/view:id`, validationRequestParamsMiddleWare, async (req, res) => {
   const appointmentId = req.params.id;
 
   try {
@@ -20,72 +25,82 @@ router.get(`/view:id`, async (req, res) => {
   }
 });
 
-router.post(`/create:id`, async (req, res) => {
-  const appointmentId = req.params.id;
-  const { amount, payment_method, payment_reference } = req.body;
+router.post(
+  `/create:id`,
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    //TODO add payment req.body validation in this file
+    const appointmentId = req.params.id;
+    const { amount, payment_method, payment_reference } = req.body;
 
-  try {
-    const result = await pool.query(
-      `INSERT INTO payments(amount,payment_method,appointment_id,payment_reference)VALUES($1,$2,$3,$4) RETURNING * `,
-      [amount, payment_method, appointmentId, payment_reference]
-    );
+    try {
+      const result = await pool.query(
+        `INSERT INTO payments(amount,payment_method,appointment_id,payment_reference)VALUES($1,$2,$3,$4) RETURNING * `,
+        [amount, payment_method, appointmentId, payment_reference]
+      );
 
-    if (result.rowCount > 0) {
-      res.status(201).json(result.rows[0]);
+      if (result.rowCount > 0) {
+        res.status(201).json(result.rows[0]);
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
-router.delete(`/delete:id`, async (req, res) => {
-  const paymentId = req.params.id;
+router.delete(
+  `/delete:id`,
+  validationRequestParamsMiddleWare,
+  async (req, res) => {
+    const paymentId = req.params.id;
 
-  try {
-    const result = await pool.query(`DELETE FROM payments WHERE id = $1`, [
-      paymentId,
-    ]);
+    try {
+      const result = await pool.query(`DELETE FROM payments WHERE id = $1`, [
+        paymentId,
+      ]);
 
-    if (result.rowCount > 0) {
-      res.status(200).json("Deletion was a success");
+      if (result.rowCount > 0) {
+        res.status(200).json("Deletion was a success");
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(error.message);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
   }
-});
+);
 
-router.get(`/getAllProfilePayments:id`, async (req, res) => {
-  if (!req.params.id || !req.query.start_date || !req.query.end_date) {
-    res
-      .status(400)
-      .json({ message: "Not all paramteres or queries were supplied" });
-    return;
-  }
+router.get(
+  `/getAllProfilePayments:id`,
+  validationRequestParamsMiddleWare,
+  validationRequestQueryMiddleWare([
+    "start_date",
+    "end_date",
+    "page",
+    "pageSize",
+  ]),
+  async (req, res) => {
+    const profileId = req.params.id;
+    const startDateSearch = req.query.start_date;
+    const endDateSearch = req.query.end_date;
+    const limit = parseInt(req.query.pageSize);
+    const offset = (parseInt(req.query.page) - 1) * limit;
 
-  const profileId = req.params.id;
-  const startDateSearch = req.query.start_date;
-  const endDateSearch = req.query.end_date;
-  const limit = parseInt(req.query.pageSize);
-  const offset = (parseInt(req.query.page) - 1) * limit;
-  console.log("the offset is " + offset);
-
-  try {
-    const totalRowCount = await pool.query(
-      `select count(*)  FROM PAYMENTS 
+    try {
+      const totalRowCount = await pool.query(
+        `select count(*)  FROM PAYMENTS 
     JOIN APPOINTMENTS ON APPOINTMENTS.ID = PAYMENTS.APPOINTMENT_ID
     JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID where patients.profile_id = $1 and payment_date >= $2 and payment_date <= $3 `,
-      [profileId, startDateSearch, endDateSearch]
-    );
+        [profileId, startDateSearch, endDateSearch]
+      );
 
-    const totalPages = Math.max(
-      Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
-      1
-    );
+      const totalPages = Math.max(
+        Math.ceil(parseInt(totalRowCount.rows[0].count) / limit),
+        1
+      );
 
-    const result = await pool.query(
-      `SELECT PAYMENTS.ID AS PAYMENT_ID,
+      const result = await pool.query(
+        `SELECT PAYMENTS.ID AS PAYMENT_ID,
     APPOINTMENTS.ID AS APPOINTMENT_ID,
     PAYMENT_METHOD,
     PAYMENT_DATE,
@@ -98,18 +113,19 @@ router.get(`/getAllProfilePayments:id`, async (req, res) => {
   FROM PAYMENTS 
   JOIN APPOINTMENTS ON APPOINTMENTS.ID = PAYMENTS.APPOINTMENT_ID
   JOIN PATIENTS ON PATIENTS.ID = APPOINTMENTS.PATIENT_ID where patients.profile_id = $1 and payment_date >= $2 and payment_date <= $3 offset $4 limit $5 `,
-      [profileId, startDateSearch, endDateSearch, offset, limit]
-    );
+        [profileId, startDateSearch, endDateSearch, offset, limit]
+      );
 
-    res
-      .status(200)
-      .json({ data: result.rows, metaData: { totalPages: totalPages } });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+      res
+        .status(200)
+        .json({ data: result.rows, metaData: { totalPages: totalPages } });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: error.message });
+    }
   }
-});
+);
 
 export default router;

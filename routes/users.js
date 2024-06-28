@@ -2,29 +2,35 @@ import express from "express";
 import bcrypt from "bcrypt";
 import pool from "../config/dbconfig.js";
 import passport from "../config/passportConfig.js";
+import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { registerFormSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
-router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+router.post(
+  "/register",
+  validationRequestBodyMiddleWare(registerFormSchema),
+  async (req, res) => {
+    const { email, password } = req.validatedData;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  try {
-    const result = await pool.query(
-      "insert into users(email,password)values($1,$2)",
-      [email, hashedPassword]
-    );
+    try {
+      const result = await pool.query(
+        "insert into users(email,password)values($1,$2)",
+        [email, hashedPassword]
+      );
 
-    if (result.rowCount > 0) {
-      res
-        .status(201)
-        .json({ success: true, message: "user successfully created" });
+      if (result.rowCount > 0) {
+        res
+          .status(201)
+          .json({ success: true, message: "user successfully created" });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "internal server error" });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "internal server error" });
   }
-});
+);
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
   res.status(200).json({ message: "Login successful", data: req.user });
