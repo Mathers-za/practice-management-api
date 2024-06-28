@@ -47,13 +47,7 @@ router.patch(
   "/update:id",
   validationMiddleWare(profileValidationSchema),
   async (req, res) => {
-    await updateRecords(
-      req,
-      res,
-      "user_profile",
-      "id",
-      profileValidationSchema
-    );
+    await updateRecords(req, res, "user_profile", "id");
   }
 );
 

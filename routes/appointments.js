@@ -1,6 +1,6 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
-import updateRecords from "../helperFunctions/patchRoute.js";
+
 import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
 import { createAppointmentValidationSchema } from "../helperFunctions/validationSchemas.js";
 
@@ -10,7 +10,7 @@ router.post(
   "/createAppointment",
   validationMiddleWare(createAppointmentValidationSchema),
   async (req, res) => {
-    const cleanedData = createAppointmentValidationSchema.cast(req.body);
+    const cleanedData = req.validatedData;
     const {
       appointment_date,
       start_time,

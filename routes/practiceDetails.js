@@ -71,13 +71,7 @@ router.patch(
   "/update:id",
   validationMiddleWare(practiceDetailsValidationSchema),
   async (req, res) => {
-    await updateRecords(
-      req,
-      res,
-      "practice_details",
-      "id",
-      practiceDetailsValidationSchema
-    );
+    await updateRecords(req, res, "practice_details", "id");
   }
 );
 

@@ -1,35 +1,45 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
+import { validationMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import { predefinedIcdCodeValidationSchema } from "../helperFunctions/validationSchemas.js";
 
 const router = express.Router();
 
-router.post("/create:id", async (req, res) => {
-  const appTypeid = req.params.id;
-  const { icd10_code, procedural_code, price } = req.body;
+router.post(
+  "/create:id",
+  validationMiddleWare(predefinedIcdCodeValidationSchema),
+  async (req, res) => {
+    const appTypeid = req.params.id;
+    const { icd10_code, procedural_code, price } = req.body;
 
-  try {
-    const result = await pool.query(
-      "INSERT INTO predefined_icd10_codes(icd10_code,procedural_code,price,appointment_type_id)VALUES($1,$2,$3,$4) returning * ",
-      [icd10_code, procedural_code, price, appTypeid]
-    );
+    try {
+      const result = await pool.query(
+        "INSERT INTO predefined_icd10_codes(icd10_code,procedural_code,price,appointment_type_id)VALUES($1,$2,$3,$4) returning * ",
+        [icd10_code, procedural_code, price, appTypeid]
+      );
 
-    if (result.rowCount > 0) {
-      res.status(201).json(result.rows[0]);
+      if (result.rowCount > 0) {
+        res.status(201).json(result.rows[0]);
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
   }
-});
+);
 
-router.patch("/update:id", async (req, res) => {
-  updateRecords(req, res, "predefined_icd10_codes", "id");
-});
+router.patch(
+  "/update:id",
+  validationMiddleWare(predefinedIcdCodeValidationSchema),
+  async (req, res) => {
+    updateRecords(req, res, "predefined_icd10_codes", "id");
+  }
+);
 
 router.get("/view:id", async (req, res) => {
   //this get route gets all predfined icd_10 code per appointment type

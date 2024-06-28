@@ -14,7 +14,7 @@ router.post(
   validationMiddleWare(createPatientValidationSchema),
   async (req, res) => {
     //create client endpoint
-    const cleanedData = createPatientValidationSchema.cast(req.body);
+    const cleanedData = req.validatedData;
     const { first_name, last_name, contact_number, email } = cleanedData;
     const profileId = req.params.id;
 
@@ -89,13 +89,7 @@ router.patch(
   "/update:id",
   validationMiddleWare(updatePatientValidationSchema),
   async (req, res) => {
-    await updateRecords(
-      req,
-      res,
-      "patients",
-      "id",
-      updatePatientValidationSchema
-    );
+    await updateRecords(req, res, "patients", "id");
   }
 );
 

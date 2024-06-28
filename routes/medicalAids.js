@@ -10,7 +10,7 @@ router.post(
   validationMiddleWare(medicalAidValidation),
   async (req, res) => {
     const patientId = req.params.id;
-    const cleanedData = medicalAidValidation(req.body);
+    const cleanedData = req.validatedData;
     const {
       gov_id,
       medaid_name,
@@ -53,7 +53,7 @@ router.patch(
   "/update:id",
   validationMiddleWare(medicalAidValidation),
   async (req, res) => {
-    await updateRecords(req, res, "medical_aid", "id", medicalAidValidation);
+    await updateRecords(req, res, "medical_aid", "id");
   }
 );
 

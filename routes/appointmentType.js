@@ -13,7 +13,7 @@ router.post(
   "/create:id",
   validationMiddleWare(createAppointmentTypeValidationSchema),
   async (req, res) => {
-    const cleanedData = createAppointmentTypeValidationSchema.cast(req.body);
+    const cleanedData = req.validatedData;
     const { appointment_name, duration, price } = cleanedData;
     const profile_id = req.params.id;
 
@@ -55,13 +55,7 @@ router.patch(
   "/update:id",
   validationMiddleWare(updateAppointmentTypeValidatiionSchema),
   async (req, res) => {
-    await updateRecords(
-      req,
-      res,
-      "appointment_type",
-      "id",
-      updateAppointmentTypeValidatiionSchema
-    );
+    await updateRecords(req, res, "appointment_type", "id");
   }
 );
 

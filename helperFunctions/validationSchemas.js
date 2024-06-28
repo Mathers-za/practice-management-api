@@ -306,16 +306,19 @@ export const invoicePageFinancialsValidation = object({
     ),
 });
 
-export const icdCodeValidationSchema = object({
+export const predefinedIcdCodeValidationSchema = object({
   icd10_code: string("invalid format").transform((value) =>
     value === undefined ? null : value
   ),
-  procedural_code: string().nullable(),
+  procedural_code: string()
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
   price: number("Invalid format")
     .transform((value) => (isNaN(value) ? null : value))
+    .nonNullable("price cannot be nothing")
 
     .min(0, "Price must be a minimum of 0")
-    .notOneOf(["", null], "price cannot be nothing")
+
     .test("decimalCheck", "Price cannot exceed 2 decimal places", (value) => {
       if (value === undefined) {
         return true;
