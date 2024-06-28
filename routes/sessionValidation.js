@@ -1,12 +1,13 @@
 import express from "express";
+import { CustomError } from "../helperFunctions/newClasses.js";
 
 const router = express.Router();
 
-router.get("/validate", (req, res) => {
+router.get("/validate", (req, res, next) => {
   if (req.isAuthenticated()) {
-    res.send(true);
+    next();
   } else {
-    res.send(false);
+    throw new CustomError("Unauthorised", "Unauthorised access", 401);
   }
 });
 

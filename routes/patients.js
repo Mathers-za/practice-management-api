@@ -2,6 +2,7 @@ import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
 import {
+  sessionValidation,
   validationRequestBodyMiddleWare,
   validationRequestParamsMiddleWare,
 } from "../helperFunctions/middlewareHelperFns.js";
@@ -70,6 +71,7 @@ router.get(
 
 router.get(
   "/viewPatient:id",
+
   validationRequestParamsMiddleWare,
   async (req, res) => {
     try {

@@ -1,7 +1,10 @@
 import express from "express";
 import pool from "../config/dbconfig.js";
 import updateRecords from "../helperFunctions/patchRoute.js";
-import { validationRequestBodyMiddleWare } from "../helperFunctions/middlewareHelperFns.js";
+import {
+  sessionValidation,
+  validationRequestBodyMiddleWare,
+} from "../helperFunctions/middlewareHelperFns.js";
 import { profileValidationSchema } from "../helperFunctions/validationSchemas.js";
 const router = express.Router(); //no delete route- need to fighure out how to cascade delete while arching poetnetially important info
 
