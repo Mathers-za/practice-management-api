@@ -5,9 +5,9 @@ const router = express.Router();
 
 router.get("/validate", (req, res, next) => {
   if (req.isAuthenticated()) {
-    next();
+    res.status(200).json(true);
   } else {
-    throw new CustomError("Unauthorised", "Unauthorised access", 401);
+    res.json(false);
   }
 });
 

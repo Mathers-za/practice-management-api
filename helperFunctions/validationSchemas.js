@@ -9,6 +9,7 @@ import {
   string,
 } from "yup";
 import defaultData from "./defaultData.js";
+import pool from "../config/dbconfig.js";
 export const loginFormSchema = object({
   email: string("Invalid format")
     .email("Invalid Email")
@@ -61,23 +62,18 @@ export const registerFormSchema = object({
   email: string("Invalid type")
     .email("Invalid email")
     .required("Email required")
-    .test("email", "Email Address already exists", async (value) => {
-      try {
-        const response = await axiosRequest(
-          "post",
-          "/users/checkEmailExistence",
-          {
-            email: value,
-          }
+    .test(
+      "checkEmailExistenceInDb",
+      "Email Address already exists",
+      async (value) => {
+        const response = await pool.query(
+          "select email from users where email = $1 ",
+          [value]
         );
 
-        if (response.status === 200) {
-          return true;
-        }
-      } catch (error) {
-        return false;
+        return response.rowCount === 0;
       }
-    }),
+    ),
   password: string("Invalid format")
     .matches(/[A-Z]+/, "Password must contain atleast one uppercase letter")
     .matches(/[a-z]+/, "Password must contain atleast one lowercase letter")

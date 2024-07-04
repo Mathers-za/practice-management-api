@@ -46,15 +46,3 @@ export function validationRequestQueryMiddleWare(queryArray) {
     }
   };
 }
-
-export function sessionValidation(req, res, next) {
-  try {
-    if (req.isAuthenticated()) {
-      next();
-    } else {
-      throw new CustomError("Unauthorised", "unauthorised access", 401);
-    }
-  } catch (error) {
-    next(error);
-  }
-}
