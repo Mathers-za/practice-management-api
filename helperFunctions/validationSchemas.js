@@ -332,9 +332,9 @@ export const invoicePageFinancialsValidation = object({
 });
 
 export const icdCodevalidationSchema = object({
-  icd10_code: string("invalid format").transform((value) =>
-    value === undefined ? null : value
-  ),
+  icd10_code: string("invalid format")
+    .transform((value) => (value === undefined ? null : value))
+    .nullable(),
   procedural_code: string()
     .transform((value) => (value === "" ? null : value))
     .nullable(),

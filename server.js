@@ -22,6 +22,7 @@ import emailNotificationsRoute from "./routes/customEmails.js";
 import patientAdditionalInformationRoute from "./routes/patientAdditionalInformation.js";
 import { ValidationError } from "yup";
 //import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job- disbaled in development
+import statistics from "./routes/statistics.js";
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -69,6 +70,7 @@ app.use("/treatmentNotes", treatmentNotesRoute);
 app.use("/financials", financialsRoute);
 app.use("/payments", paymentRoute);
 app.use("/patientAdditionalInformation", patientAdditionalInformationRoute);
+app.use("/stats", statistics);
 app.use((error, req, res, next) => {
   if (error) {
     res.status(error.status || 500).json({

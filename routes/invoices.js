@@ -20,6 +20,7 @@ import {
   createInvoiceValidationSchema,
   updateInvoiceValidationSchema,
 } from "../helperFunctions/validationSchemas.js";
+import { CustomError } from "../helperFunctions/newClasses.js";
 
 const router = express.Router();
 
@@ -261,17 +262,17 @@ router.get(
 
 router.post(
   `/sendInvoiceStatment`,
-  validationRequestQueryMiddleWare([
-    "profileId",
-    "appointmentId",
-    "patientId",
-    "invoiceNumber",
-  ]),
+
   async (req, res) => {
     const { profileId, appointmentId, patientId, invoiceNumber } = req.body;
-    console.log(
-      `profile id = ${profileId}, appointmentId = ${appointmentId}, patientId = ${patientId}`
-    );
+    if (!profileId || !appointmentId || !patientId) {
+      throw new CustomError(
+        "badRequest",
+        "ProfileId, appointmentId or patientId is missing from teh request body",
+        400
+      );
+    }
+
     try {
       const data = await extractDataFromDB(profileId, appointmentId, patientId);
       console.log(`data extrcated is ${data?.generalData?.practice_name}`);
@@ -314,7 +315,9 @@ router.post(
       res.status(200).send("sent email successfully");
     } catch (error) {
       console.error(error);
-      res.status(500).json(error.message);
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: error.message });
     }
   }
 );

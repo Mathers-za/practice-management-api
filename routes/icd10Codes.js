@@ -15,7 +15,7 @@ router.post(
   validationRequestBodyMiddleWare(icdCodevalidationSchema),
   async (req, res) => {
     const appointmentId = req.params.id;
-    const { icd_10_code, procedural_codes, price } = req.validation;
+    const { icd_10_code, procedural_codes, price } = req.validatedData;
 
     try {
       const result = await pool.query(
