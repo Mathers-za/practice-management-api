@@ -13,6 +13,8 @@ Invoices for each appointment can be generated and sent via email in PDF format 
 
 Appointment, patient, and financial data have multiple pages within the application that provide easy visualization for users to track their data.
 
+A large emphasis was placed on creating a user friendly UI, laid out in such a way as to provide the user with multiple shortcuts to easily access thier data, and perform core actions, thus allowing administrative tasks to be as streamlined as possible.
+
 ## Getting Started
 
 ### Executing program
@@ -21,7 +23,7 @@ Appointment, patient, and financial data have multiple pages within the applicat
 2. For the practice-management-api (development server): 
 
 ```
-npm init
+npm install
 ```
 ```
 nodemon server.js
@@ -32,7 +34,7 @@ nodemon server.js
 cd my-front-end
 ```
 ```
-npm init
+npm install
 ```
 ```
 npm start
