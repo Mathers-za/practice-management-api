@@ -29,10 +29,6 @@ npm install
 nodemon server.js
 ```
 3. For practice-mangment-frontend:
-
-```
-cd my-front-end
-```
 ```
 npm install
 ```
