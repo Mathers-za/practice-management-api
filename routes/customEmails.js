@@ -43,6 +43,8 @@ router.post(`/sendConfirmationEmail`, async (req, res) => {
         USER_PROFILE.PROFILE_EMAIL AS USER_EMAIL,
         CONFIRMATION_SUBJECT,
         CONFIRMATION_BODY,
+        cancellation_email_subject,
+        cancellation_email_body,
         profession,
         APPOINTMENT_TYPE.APPOINTMENT_NAME AS APPOINTMENT_TYPE_NAME,
         PRACTICE_NAME,
@@ -198,6 +200,94 @@ router.post(`/customizationErrorCheck`, async (req, res) => {
     res.status(200).json("template is correct");
   } catch (error) {
     res.status(400).json(error.message);
+  }
+});
+
+router.post(`/sendCancellationEmail`, async (req, res) => {
+  const { profileId, appointmentId, patientId } = req.body;
+
+  let compiledSubject = "";
+  let compiledBody = "";
+  try {
+    const result = await pool.query(
+      `SELECT PATIENTS.EMAIL AS PATIENT_EMAIL,
+        PATIENTS.FIRST_NAME AS PATIENT_FIRST_NAME,
+        PATIENTS.LAST_NAME AS PATIENT_LAST_NAME,
+        USER_PROFILE.FIRST_NAME AS USER_FIRST_NAME,
+        USER_PROFILE.LAST_NAME AS USER_LAST_NAME,
+        user_profile.id as profile_id,
+        patients.id as patient_id,
+        USER_PROFILE.PROFILE_EMAIL AS USER_EMAIL,
+        CONFIRMATION_SUBJECT,
+        CONFIRMATION_BODY,
+        cancellation_email_subject,
+        cancellation_email_body,
+        profession,
+        APPOINTMENT_TYPE.APPOINTMENT_NAME AS APPOINTMENT_TYPE_NAME,
+        PRACTICE_NAME,
+        PRACTICE_ADDRESS,
+        START_TIME,
+        APPOINTMENT_DATE,appointment_type.id as appointment_type_id,
+        appointments.id as appointment_id
+    FROM USER_PROFILE
+    JOIN EMAIL_CUSTOMIZATIONS ON EMAIL_CUSTOMIZATIONS.PROFILE_ID = USER_PROFILE.ID
+    JOIN APPOINTMENT_TYPE ON APPOINTMENT_TYPE.PROFILE_ID = USER_PROFILE.ID
+    JOIN PRACTICE_DETAILS ON PRACTICE_DETAILS.PROFILE_ID = USER_PROFILE.ID
+    JOIN PATIENTS ON PATIENTS.PROFILE_ID = USER_PROFILE.ID
+    JOIN APPOINTMENTS ON APPOINTMENTS.APPOINTMENT_TYPE_ID = APPOINTMENT_TYPE.ID
+              WHERE USER_PROFILE.ID = $1
+                  AND APPOINTMENTS.ID = $2
+                  AND PATIENTS.ID = $3`,
+      [profileId, appointmentId, patientId]
+    );
+
+    const dataUsedForTemplating = result.rows[0];
+    console.log(dataUsedForTemplating);
+
+    if (dataUsedForTemplating.cancellation_email_subject) {
+      const processedSubject = processDataForHbsCompatibilty(
+        dataUsedForTemplating,
+        "cancellation_email_subject"
+      );
+      compiledSubject = compileEmailTemplate(
+        processedSubject.cancellation_email_subject,
+        dataUsedForTemplating
+      );
+    } else
+      throw new CustomError(
+        "Server error",
+        "Missing data for remplating cancellation email",
+        500
+      );
+    if (dataUsedForTemplating.cancellation_email_body) {
+      const processedBody = processDataForHbsCompatibilty(
+        dataUsedForTemplating,
+        "cancellation_email_body"
+      );
+      compiledBody = compileEmailTemplate(
+        processedBody.cancellation_email_body,
+        dataUsedForTemplating
+      );
+    } else
+      throw new CustomError(
+        "Server error",
+        "Missing data for remplating cancellation email",
+        500
+      );
+
+    await sendNotificationEmail(
+      compiledSubject,
+      compiledBody,
+      dataUsedForTemplating.patient_email,
+      "html"
+    );
+
+    res.status(200).json({ message: "Cancellation email succesfully sent" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 });
 
