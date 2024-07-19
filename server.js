@@ -23,9 +23,12 @@ import patientAdditionalInformationRoute from "./routes/patientAdditionalInforma
 import { ValidationError } from "yup";
 //import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job- disbaled in development
 import statistics from "./routes/statistics.js";
+import jotFormWebHook from "./routes/jotform.js";
+import multer from "multer";
 
 const app = express();
 const port = process.env.SERVER_PORT;
+const upload = multer();
 
 app.use(
   session({
@@ -42,6 +45,8 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(upload.array());
+app.use(express.static("public"));
 app.use(
   cors({
     credentials: true,
@@ -71,6 +76,7 @@ app.use("/financials", financialsRoute);
 app.use("/payments", paymentRoute);
 app.use("/patientAdditionalInformation", patientAdditionalInformationRoute);
 app.use("/stats", statistics);
+app.use("/", jotFormWebHook);
 app.use((error, req, res, next) => {
   if (error) {
     res.status(error.status || 500).json({
