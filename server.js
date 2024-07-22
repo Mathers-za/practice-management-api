@@ -23,7 +23,7 @@ import patientAdditionalInformationRoute from "./routes/patientAdditionalInforma
 import { ValidationError } from "yup";
 //import job from "./ScheduledCronJobs/sendEmailAppointmentReminder.js"; //dont delete- runs a cron job- disbaled in development
 import statistics from "./routes/statistics.js";
-import jotFormWebHook from "./routes/jotform.js";
+import jotFormWebHook from "./routes/jotformRoute/jotform.js";
 import multer from "multer";
 
 const app = express();
