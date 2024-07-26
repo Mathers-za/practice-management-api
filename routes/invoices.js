@@ -264,7 +264,14 @@ router.post(
   `/sendInvoiceStatment`,
 
   async (req, res) => {
-    const { profileId, appointmentId, patientId, invoiceNumber } = req.body;
+    const {
+      profileId,
+      appointmentId,
+      patientId,
+      invoiceNumber,
+      medicalAidEmailAddress, //if medicalAidEmailAddress arg is supplied, the nodemailer reciepnt will codtionally apply the medical aid email adress
+    } = req.body;
+
     if (!profileId || !appointmentId || !patientId) {
       throw new CustomError(
         "badRequest",
@@ -297,11 +304,21 @@ router.post(
 
       await transporter.sendMail({
         from: "danielmathers97@gmail.com",
-        to: data.generalData.patient_email,
-        subject: "Invoice Statment for your chiropractic appointment",
-        text: `Please find your invoice Statement for your appointment with ${
-          data?.generalData?.user_first_name || ""
-        } ${data?.generalData?.user_last_name || ""}`,
+        to: medicalAidEmailAddress
+          ? medicalAidEmailAddress
+          : data.generalData.patient_email,
+        subject: medicalAidEmailAddress
+          ? `Claims statement for ${
+              data.generalData.patient_first_name +
+              " " +
+              (data.generalData.patient_last_name || "")
+            } `
+          : "Invoice Statment for your chiropractic appointment",
+        text: medicalAidEmailAddress
+          ? `Good day. Attached below is an invoice statement for the following patient: ${data?.medicalAidData?.medaid_number} who would like to claim from your medical aid scheme. Thank you in advance   `
+          : `Please find your invoice Statement for your appointment with ${
+              data?.generalData?.user_first_name || ""
+            } ${data?.generalData?.user_last_name || ""}`,
 
         attachments: [
           {
@@ -383,5 +400,26 @@ router.get(
     }
   }
 );
+
+router.get(`/medicalAidContactInformation`, async (req, res) => {
+  try {
+    const medicalAidData = await pool.query(
+      `select * from medical_aid_contact_details`
+    );
+    if (medicalAidData.rowCount > 0) {
+      res.status(200).json(medicalAidData.rows);
+    } else
+      throw new CustomError(
+        "Internal Server Error",
+        "error occured during the fetching of medical contact details",
+        500
+      );
+  } catch (error) {
+    console.error(error);
+    res
+      .json(500)
+      .json({ message: "Internal server errror", error: error.message });
+  }
+});
 
 export default router;
