@@ -1,37 +1,47 @@
+import { da } from "date-fns/locale";
 import pool from "../../config/dbconfig.js";
 
+function replaceUnnecessaryCharactersFromJotFormWebHookData(jotFormData) {
+  const cleanedObj = {};
+  for (const key in jotFormData) {
+    cleanedObj[key.toString().slice(key.indexOf("_") + 1)] = jotFormData[key];
+  }
+  return cleanedObj;
+}
+
 export function organiseDataFromWebHook(rawJotFormData) {
-  const data = JSON.parse(rawJotFormData.rawRequest);
+  let data = JSON.parse(rawJotFormData.rawRequest);
+  data = replaceUnnecessaryCharactersFromJotFormWebHookData(data);
   console.log(data);
   const organisedData = {
     patientContactDetails: {
-      firstName: data?.q3_firstName || null,
-      lastName: data?.q4_lastName || null,
+      firstName: data?.firstName || null,
+      lastName: data?.lastName || null,
       contactNumber:
-        data?.q10_contactNumber?.full.replace(/[\(\)\-\s]/gi, "") || null,
-      email: data?.q7_patientEmail || null,
+        data?.contactNumber?.full.replace(/[\(\)\-\s]/gi, "") || null,
+      email: data?.patientEmail || null,
     },
-    patientId: +data.q11_patientId,
+    patientId: +data.patientId,
     medicalAidData: {
-      medAidName: data?.q14_medAidName || null,
-      scheme: data?.q15_medAidScheme || null,
+      medAidName: data?.medAidName || null,
+      scheme: data?.medAidScheme || null,
 
-      medAidNumber: data?.q17_medAidNumber || null,
-      idNumber: data?.q16_idNumber || null,
+      medAidNumber: data?.medAidNumber || null,
+      idNumber: data?.idNumber || null,
 
-      isDepedant: data.q21_isDependant === "No" ? false : true,
-      mainMemFirstName: data.q22_mainMemFirstName,
-      mainMemLastName: data?.q23_mainMemLastName || null,
-      mainMemId: data?.q24_mainMemIdNumber || null,
+      isDepedant: data.isDependant.toLowerCase() === "no" ? false : true,
+      mainMemFirstName: data.mainMemFirstName,
+      mainMemLastName: data?.mainMemLastName || null,
+      mainMemId: data?.mainMemIdNumber || null,
     },
     ptAdditionalInfo: {
       dateOfBirth:
-        data.q29_dob.year && data.q29_dob.month && data.q29_dob.day
-          ? data.q29_dob.year + "" + data.q29_dob.month + "" + data.q29_dob.day
+        data?.dob?.year && data?.dob?.month && data?.dob?.day
+          ? data.dob.year + "" + data.dob.month + "" + data.dob.day
           : null,
-      initials: data?.q25_initials || null,
-      gender: data?.q26_gender || null,
-      title: data?.q28_title || null,
+      initials: data?.initials || null,
+      gender: data?.gender || null,
+      title: data?.title || null,
     },
   };
   console.log("web hook data is " + JSON.stringify(organisedData));
@@ -41,17 +51,20 @@ export function organiseDataFromWebHook(rawJotFormData) {
 
 export async function checkIfDbEntryExists(
   tableName,
-  primaryKeyvalue,
-  primaryKeyColumnName
+  value,
+  columnNameWhereValueIsFound
 ) {
   try {
     const response = await pool.query(
-      `select ${primaryKeyColumnName} from ${tableName} where ${primaryKeyColumnName} = $1 `,
-      [primaryKeyvalue]
+      `select * from ${tableName} where ${columnNameWhereValueIsFound} = $1 `,
+      [value]
     );
+    console.log("the follwoing was found " + response.rowCount);
     if (response.rowCount > 0) {
       return true;
-    } else return false;
+    } else {
+      return false;
+    }
   } catch (error) {
     console.error(error);
     throw error;

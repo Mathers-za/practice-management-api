@@ -21,7 +21,13 @@ router.post(`/webhook`, async (req, res) => {
       webHookData.patientId,
     ]);
 
-    if (checkIfDbEntryExists("medical_aid", webHookData.patientId, "id")) {
+    if (
+      await checkIfDbEntryExists(
+        "medical_aid",
+        webHookData.patientId,
+        "patient_id"
+      )
+    ) {
       await pool.query(updateMedicalAidQuery, [
         ...Object.values(webHookData.medicalAidData),
         webHookData.patientId,
@@ -34,10 +40,10 @@ router.post(`/webhook`, async (req, res) => {
     }
 
     if (
-      checkIfDbEntryExists(
+      await checkIfDbEntryExists(
         "additional_patient_information",
         webHookData.patientId,
-        "id"
+        "patient_id"
       )
     ) {
       await pool.query(updatePtAdditionalInfoQuery, [
